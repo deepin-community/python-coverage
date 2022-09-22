@@ -1,0 +1,19 @@
+# debian/watch
+# Debian UScan configuration for this package.
+# Manual page: ‘uscan(1)’.
+
+# Version of UScan configuration format.
+version = 4
+
+# Source tarball from Python Package Index.
+opts = "uversionmangle=s/(\d)((?:a|b|c|rc)\d*)$/$1~$2/,repack,repacksuffix=+dfsg1,dversionmangle=s/\+dfsg\d+$//" \
+    https://pypi.debian.net/coverage/ \
+    /coverage/coverage-@ANY_VERSION@@ARCHIVE_EXT@ \
+    debian uupdate
+
+
+# Local variables:
+# coding: utf-8
+# mode: conf
+# End:
+# vim: fileencoding=utf-8 filetype=conf :

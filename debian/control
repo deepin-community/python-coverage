@@ -1,0 +1,56 @@
+Source: python-coverage
+Maintainer: Ben Finney <bignose@debian.org>
+Section: python
+Priority: optional
+Build-Depends:
+    dh-python,
+    python3-sphinx,
+    python3-sphinx-rtd-theme,
+    python3-sphinx-tabs,
+    python3-sphinxcontrib.restbuilder,
+    python3-sphinxcontrib.spelling,
+    python3-setuptools,
+    python3-all-dev,
+    python3,
+    debhelper-compat (= 13)
+Standards-Version: 4.6.0
+Homepage: https://coverage.readthedocs.io/
+VCS-Git: https://salsa.debian.org/debian/pkg-python-coverage.git
+VCS-Browser: https://salsa.debian.org/debian/pkg-python-coverage/
+Rules-Requires-Root: no
+
+Package: python3-coverage
+Architecture: any
+Depends:
+    python3-pkg-resources,
+    ${python3:Depends},
+    ${shlibs:Depends},
+    ${misc:Depends}
+Suggests:
+    python-coverage-doc
+Description: code coverage tool for Python 3
+ Coverage.py is a tool for measuring code coverage of Python programs.
+ It monitors your program, noting which parts of the code have been
+ executed, then analyzes the source to identify code that could have
+ been executed but was not.
+ .
+ Coverage measurement is typically used to gauge the effectiveness of
+ tests. It can show which parts of your code are being exercised by
+ tests, and which are not.
+ .
+ This package installs the Python version 3 ‘coverage’ library, and the
+ ‘python3-coverage’ program to perform and report coverage tests.
+
+Package: python-coverage-doc
+Architecture: all
+Section: doc
+Depends:
+    ${sphinxdoc:Depends},
+    ${misc:Depends}
+Description: code coverage tool for Python — documentation
+ Coverage.py is a tool for measuring code coverage of Python programs.
+ It monitors your program, noting which parts of the code have been
+ executed, then analyzes the source to identify code that could have
+ been executed but was not.
+ .
+ This package installs the HTML documentation for Coverage.py.

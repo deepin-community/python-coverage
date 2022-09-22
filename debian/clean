@@ -1,0 +1,12 @@
+# debian/clean
+# Files to remove for ‘clean’ target during package build.
+# Manual page: ‘dh_clean(1)’.
+
+*.egg-info/
+
+
+# Local variables:
+# coding: utf-8
+# mode: conf
+# End:
+# vim: fileencoding=utf-8 filetype=conf :

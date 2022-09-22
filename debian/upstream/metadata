@@ -1,0 +1,33 @@
+# debian/upstream/metadata
+# Part of Debian ‘python-coverage’ package.
+#
+# This is free software, and you are welcome to redistribute it under
+# certain conditions; see the end of this file for copyright
+# information, grant of license, and disclaimer of warranty.
+
+%YAML 1.1
+---
+# <URL:https://wiki.debian.org/UpstreamMetadata>
+Name: Coverage.py
+Contact: Ned Batchelder <ned@nedbatchelder.com>
+Archive: PyPI
+Bug-Database: https://github.com/nedbat/coveragepy/issues/
+Bug-Submit: https://github.com/nedbat/coveragepy/issues/new
+Repository: https://github.com/nedbat/coveragepy.git
+Repository-Browse: https://github.com/nedbat/coveragepy/
+Documentation: https://coverage.readthedocs.io/
+Changelog: https://github.com/nedbat/coveragepy/blob/master/CHANGES.rst
+
+
+# Copyright © 2018–2022 Ben Finney <bignose@debian.org>
+#
+# This is free software; you may copy, modify, and/or distribute this work
+# under the terms of the GNU General Public License, version 3 or later.
+# No warranty expressed or implied.
+# See the file '/usr/share/common-licenses/GPL-3' for details.
+
+# Local variables:
+# coding: utf-8
+# mode: yaml
+# End:
+# vim: fileencoding=utf-8 filetype=yaml :

@@ -1,0 +1,55 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Coverage.py
+Upstream-Contact: Ned Batchelder <ned@nedbatchelder.com>
+Source: https://pypi.org/project/coverage/
+Comment:
+    The pristine upstream source contains obfuscated files, that are
+    thereby not appropriate for use as source files. This violates DFSG §2.
+Files-Excluded:
+    tests/qunit/jquery.tmpl.min.js
+
+Files: *
+Copyright:
+    © 2004–2021 Ned Batchelder <ned@nedbatchelder.com>
+    © 2001 Gareth Rees
+License: Apache-2
+License-Grant:
+    Except where noted otherwise, this software is licensed under the Apache
+    License, Version 2.0 (the "License"); you may not use this work except in
+    compliance with the License.  You may obtain a copy of the License at
+    .
+        http://www.apache.org/licenses/LICENSE-2.0
+    .
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+Files: debian/*
+Copyright:
+    © 2008–2022 Ben Finney <bignose@debian.org>
+    © 2007–2008 Lars Wirzenius <liw@iki.fi>
+License: GPL-3+
+License-Grant:
+    This is free software: you may copy, modify, and/or distribute this work
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; version 3 of that license or any later version.
+    No warranty expressed or implied.
+
+
+License: Apache-2
+    On Debian systems, the complete text of version 2.0 of the Apache License
+    can be found in ‘/usr/share/common-licenses/Apache-2.0’.
+
+License: GPL-3+
+    On Debian systems, the complete text of the GNU General Public License
+    version 3 can be found in the file ‘/usr/share/common-licenses/GPL-3’.
+
+
+# Local variables:
+# coding: utf-8
+# mode: debian-copyright
+# fill-column: 78
+# End:
+# vim: fileencoding=utf-8 textwidth=78 :

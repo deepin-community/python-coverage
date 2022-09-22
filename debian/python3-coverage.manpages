@@ -1,0 +1,12 @@
+# debian/python3-coverage.manpages
+# Manual page files to install during ‘python3-coverage’ package build.
+# Manual page: ‘dh_installman(1)’.
+
+doc/python3*-coverage.1
+
+
+# Local variables:
+# coding: utf-8
+# mode: conf
+# End:
+# vim: fileencoding=utf-8 filetype=conf :

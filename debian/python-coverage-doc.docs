@@ -1,0 +1,12 @@
+# debian/python-coverage-doc.docs
+# Documentation files to install during ‘python-coverage-doc’ package build.
+# Manual page: ‘dh_installdocs(1)’.
+
+doc/_build/html/
+
+
+# Local variables:
+# coding: utf-8
+# mode: conf
+# End:
+# vim: fileencoding=utf-8 filetype=conf :

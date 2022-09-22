@@ -1,0 +1,253 @@
+=================
+python-coverage
+=================
+
+-------------------------------------------------
+measure code coverage of Python program execution
+-------------------------------------------------
+
+:Author: |author|
+:Date: 2020-09-06
+:Copyright:
+    Copyright © 2010–2017 Ben Finney <bignose@debian.org>
+:Manual section: 1
+:Manual group: Coverage
+
+..  |command| replace:: **python-coverage**
+..  |license| replace::
+    `GNU General Public License, version 3 or later
+    <http://www.gnu.org/licenses/>`__
+
+
+SYNOPSIS
+========
+
+| |command| `command` [ `option` ... ]
+| |command| **help** [ `command` ]
+
+
+DESCRIPTION
+===========
+
+|command| executes a Python program, measures which of its statements are
+executed and which are not, and reports these coverage measurements.
+
+
+COMMAND OVERVIEW
+================
+
+|command| **annotate**
+    Annotate source files with execution information.
+
+|command| **combine**
+    Combine a number of data files.
+
+|command| **debug**
+    Display diagnostic information about the internals of this
+    program.
+
+|command| **erase**
+    Erase previously collected coverage data.
+
+|command| **help**
+    Get help on using coverage.py.
+
+|command| **html**
+    Create an HTML report.
+
+|command| **report**
+    Report coverage stats on modules.
+
+|command| **run**
+    Run a Python program and measure code execution.
+
+|command| **xml**
+    Create an XML report of coverage results.
+
+
+GLOBAL OPTIONS
+==============
+
+**--help**, **-h**
+    Describe how to use Coverage, in general or a command.
+
+**--rcfile** `RCFILE`
+    Specify configuration file `RCFILE`. Defaults to ``.coveragerc``.
+
+**--omit** `PATTERN` ...
+    Omit files when their filename matches one of these PATTERNs.
+    Usually needs quoting on the command line.
+
+**--include** `PATTERN` ...
+    Include files only when their filename path matches one of these
+    PATTERNs. Usually needs quoting on the command line.
+
+
+COMMAND REFERENCE
+=================
+
+**annotate**
+
+    Options:
+
+    \-d `DIR`, --directory `DIR`
+        Write the output files to DIR.
+
+    \-i, --ignore-errors
+        Ignore errors while reading source files.
+
+**combine** `PATH` `PATH` [ ... ]
+
+    Combine data from multiple coverage files `PATH`, collected with
+    ``run -p``. The combined results are written to a single file
+    representing the union of the data.
+
+**debug** `topic`
+
+    Display information on the internals of coverage.py, for
+    diagnosing problems.
+
+    Topics are:
+
+    * `data`, to show a summary of the collected data.
+    * `sys`, to show installation information.
+
+**erase**
+
+    Erase previously collected coverage data.
+
+**help** [ `command` ]
+
+    Describe how to use Coverage.
+
+**html** [ `option` ... ] [ `MODULE` ... ]
+
+    Create an HTML report of the coverage of each `MODULE` file. Each file
+    gets its own page, with the source decorated to show executed,
+    excluded, and missed lines.
+
+    Options:
+
+    \-d `DIR`, --directory `DIR`
+        Write the output files to `DIR`.
+
+    \--title `TITLE`
+        Use the text string `TITLE` as the title on the HTML.
+
+    \--fail-under `MIN`
+        Exit with a status of 2 if the total coverage is less than `MIN`.
+
+    \-i, --ignore-errors
+        Ignore errors while reading source files.
+
+**report** [ `option` ... ] [ `MODULE` ... ]
+
+    Report coverage statistics on each `MODULE`.
+
+    Options:
+
+    \--fail-under `MIN`
+        Exit with a status of 2 if the total coverage is less than `MIN`.
+
+    \-i, --ignore-errors
+        Ignore errors while reading source files.
+
+    \-m, --show-missing
+        Show line numbers of statements in each module that weren't
+        executed.
+
+**run** [ `options` ... ] `PROGRAMFILE` [ `program_options` ]
+
+    Run a Python program `PROGRAMFILE`, measuring code execution.
+
+    Options:
+
+    \-a, --append
+        Append coverage data to .coverage, otherwise it is started clean
+        with each run.
+
+    \--branch
+        Measure branch coverage in addition to statement coverage.
+
+    \--debug `DEBUGOPT`,...
+        Debug options `DEBUGOPT`, separated by commas
+
+    \-L, --pylib
+        Measure coverage even inside the Python installed library, which
+        isn't done by default.
+
+    \-p, --parallel-mode
+        Append the machine name, process id and random number to the
+        ``.coverage`` data file name to simplify collecting data from many
+        processes.
+
+    \--timid
+        Use a simpler but slower trace method. Try this if you get
+        seemingly impossible results!
+
+    \--source `SOURCE` ...
+        A list of packages or directories of code to be measured.
+
+**xml** [ `options` ... ] [ `MODULES` ... ]
+
+    Generate an XML report of coverage results on each `MODULE`.
+
+    Options:
+
+    \--fail-under `MIN`
+        Exit with a status of 2 if the total coverage is less than `MIN`.
+
+    \-i, --ignore-errors
+        Ignore errors while reading source files.
+
+    \-o `OUTFILE`
+        Write the XML report to `OUTFILE`. Defaults to ``coverage.xml``.
+
+
+ENVIRONMENT VARIABLES
+=====================
+
+COVERAGE_FILE
+
+    Path to the file where coverage measurements are collected to and
+    reported from. Default: ``.coverage`` in the current working directory.
+
+COVERAGE_OPTIONS
+
+    Space-separated series of command-line options to |command|. Default:
+    empty.
+
+
+HISTORY
+=======
+
+The |command| command is a Python program which calls the ``coverage`` Python
+library to do all the work.
+
+The library was originally developed by Gareth Rees, and is now developed by
+Ned Batchelder.
+
+This manual page was written to document the |command| command for Debian. This
+is free software: you may copy, modify and/or distribute this work under the
+terms of the |license| as published by the Free Software Foundation, version 3
+or later. No warranty expressed or implied.
+
+On Debian systems, the complete text of the GNU General Public License version
+3 can be found in the file `/usr/share/common-licenses/GPL-3`.
+
+..  |author| replace:: |authorname| |authoremail|
+..  |authorname| replace:: Ben Finney
+..  |authoremail| replace:: <ben+python@benfinney.id.au>
+
+
+..
+    Local variables:
+    coding: utf-8
+    mode: text
+    mode: rst
+    time-stamp-format: "%:y-%02m-%02d"
+    time-stamp-start: "^:Date:[         ]+"
+    time-stamp-end: "$"
+    time-stamp-line-limit: 20
+    End:
+    vim: fileencoding=utf-8 filetype=rst :

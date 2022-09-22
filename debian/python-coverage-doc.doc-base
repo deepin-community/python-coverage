@@ -1,0 +1,13 @@
+Document: python-coverage
+Title: Coverage.py Python library documentation
+Author: Ned Batchelder
+Abstract: Programmer documentation for the Python ‘coverage’ library.
+Section: Programming/Python
+
+Format: HTML
+Index: /usr/share/doc/python-coverage-doc/html/index.html
+Files:
+    /usr/share/doc/python-coverage-doc/html/*.html
+    /usr/share/doc/python-coverage-doc/html/*.js
+    /usr/share/doc/python-coverage-doc/html/_static/*
+    /usr/share/doc/python-coverage-doc/html/_images/*

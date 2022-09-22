@@ -1,0 +1,56 @@
+Description: Rename public programs to be clear what they're for.
+ .
+ The upstream choice of ‘coverage’ is too broad a command name for a
+ Python-specific programmer tool.
+ .
+ Created to work with “entry points” feature of Python's Distutils.
+Bug: https://bitbucket.org/ned/coveragepy/issue/272/
+Author: Ben Finney <bignose@debian.org>
+Last-Update: 2021-12-26
+
+diff --git old/setup.py new/setup.py
+--- old/setup.py
++++ new/setup.py
+@@ -97,12 +97,14 @@ setup_args = dict(
+     },
+ 
+     entry_points={
+-        # Install a script as "coverage", and as "coverage3", and as
+-        # "coverage-3.7" (or whatever).
++        # Install a default ‘python-coverage’ program, and versioned as
++        # ‘python3.7-coverage’, ‘python3-coverage’, etc.
+         'console_scripts': [
+-            'coverage = coverage.cmdline:main',
+-            'coverage%d = coverage.cmdline:main' % sys.version_info[:1],
+-            'coverage-%d.%d = coverage.cmdline:main' % sys.version_info[:2],
++            "python-coverage = {entry}".format(entry="coverage.cmdline:main"),
++            "python{version[0]}-coverage = {entry}".format(
++                version=sys.version_info, entry="coverage.cmdline:main"),
++            "python{version[0]}.{version[1]}-coverage = {entry}".format(
++                version=sys.version_info, entry="coverage.cmdline:main"),
+         ],
+     },
+ 
+
+diff --git old/tests/coveragetest.py new/tests/coveragetest.py
+--- old/tests/coveragetest.py
++++ new/tests/coveragetest.py
+@@ -323,7 +323,7 @@ class CoverageTest(
+     # their new command name to the tests. This is here for them to override,
+     # for example:
+     # https://salsa.debian.org/debian/pkg-python-coverage/-/blob/master/debian/patches/02.rename-public-programs.patch
+-    coverage_command = "coverage"
++    coverage_command = "python3-coverage"
+ 
+     def run_command(self, cmd):
+         """Run the command-line `cmd` in a sub-process.
+
+Local variables:
+coding: utf-8
+mode: diff
+time-stamp-format: "%:y-%02m-%02d"
+time-stamp-start: "^Last-Update:[ 	]+"
+time-stamp-end: "$"
+time-stamp-line-limit: 20
+End:
+vim: fileencoding=utf-8 filetype=diff :

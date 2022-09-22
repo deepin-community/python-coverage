@@ -1,0 +1,141 @@
+#! /usr/bin/make -f
+#
+# debian/rules
+# Part of the Debian ‘python-coverage’ package.
+#
+# This is free software, and you are welcome to redistribute it under
+# certain conditions; see the end of this file for copyright
+# information, grant of license, and disclaimer of warranty.
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+bindnow
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/buildflags.mk
+
+export PYBUILD_NAME = coverage
+export PYBUILD_DISABLE = test
+export PYBUILD_SYSTEM = distutils
+
+PYTHON3_PACKAGE_NAME = python3-${PYBUILD_NAME}
+package_working_root = debian
+package_install_root = debian/{package}
+
+DISTRIBUTION_NAME = coverage
+
+HTMLFILES_DIR = ${DISTRIBUTION_NAME}/htmlfiles
+htmlfiles_dirname = $(notdir ${HTMLFILES_DIR})
+bundled_libraries += $(addprefix ${HTMLFILES_DIR}/, \
+	jquery.isonscreen.js \
+	)
+
+RESOURCES_DIR = usr/share/{package}
+package_install_resources_root = ${package_install_root}/${RESOURCES_DIR}
+
+DOCUMENTATION_DIR = doc
+MANPAGE_SUFFIX = .1
+manpage_tempfile_suffix = ${MANPAGE_SUFFIX}.tmp
+default_manpage_name = python-coverage${MANPAGE_SUFFIX}
+python3_command_names = $(sort $(notdir $(wildcard \
+	${package_working_root}/*/usr/bin/python3*-coverage)))
+versioned_command_names = ${python3_command_names}
+versioned_manpage_names = $(addsuffix ${MANPAGE_SUFFIX}, \
+	${versioned_command_names})
+versioned_manpage_paths = $(addprefix ${DOCUMENTATION_DIR}/, \
+	${versioned_manpage_names})
+GENERATED_FILES += ${DOCUMENTATION_DIR}/*${MANPAGE_SUFFIX}
+GENERATED_FILES += ${DOCUMENTATION_DIR}/*${manpage_tempfile_suffix}
+
+DOCUMENTATION_BUILD_DIR = ${DOCUMENTATION_DIR}/_build
+DOCUMENTATION_BUILD_HTML_DIR = ${DOCUMENTATION_BUILD_DIR}/html
+GENERATED_FILES += ${DOCUMENTATION_BUILD_DIR}
+
+INSTALL = install
+MV = mv
+
+# Send HTTP traffic to the “discard” service during packaging actions.
+export http_proxy = http://127.0.1.1:9/
+export https_proxy = ${http_proxy}
+
+RST_SUFFIX = .txt
+
+RST2MAN = rst2man
+
+SPHINX = python3 -m sphinx
+SPHINX_OPTS = -N
+
+
+%:
+	dh $@ --with python3,pypy,sphinxdoc --buildsystem=pybuild
+
+
+.PHONY: remove-bundled-libraries
+remove-bundled-libraries:
+	$(RM) ${bundled_libraries}
+
+.PHONY: manpage-aliases
+manpage-aliases: ${versioned_manpage_paths}
+
+${DOCUMENTATION_DIR}:
+	$(INSTALL) --directory "$@"
+
+${DOCUMENTATION_DIR}/${default_manpage_name}: ${DOCUMENTATION_DIR}
+${DOCUMENTATION_DIR}/${default_manpage_name}: ${package_working_root}/${default_manpage_name}
+	$(INSTALL) --mode=u=rw,go=r "$<" "$@"
+
+${DOCUMENTATION_DIR}/%${MANPAGE_SUFFIX}: ${DOCUMENTATION_DIR}/${default_manpage_name}
+	$(INSTALL) --mode=u=rw,go=r "$<" "$@"
+
+%.1: %.1${RST_SUFFIX}
+	$(RST2MAN) "$<" > "$@".tmp
+	cat debian/manpage_encoding_declaration.UTF-8 "$@".tmp > "$@"
+
+
+override_dh_auto_build: remove-bundled-libraries
+override_dh_auto_build:
+	dh_auto_build --buildsystem=pybuild
+	$(SPHINX) ${SPHINX_OPTS} -bhtml ${DOCUMENTATION_DIR}/ \
+		${DOCUMENTATION_BUILD_HTML_DIR}/
+
+# Upstream test suite doesn't currently run in our build environment.
+override_dh_auto_test:
+
+override_dh_auto_install:
+	dh_auto_install --buildsystem=pybuild
+	$(RM) $(addprefix ${package_working_root}/${PYTHON3_PACKAGE_NAME}/, \
+	    usr/bin/python-coverage)
+
+export PYBUILD_AFTER_INSTALL = \
+	$(INSTALL) --mode=u=rwx,go=rx --directory \
+	    "${package_install_resources_root}" ; \
+	$(INSTALL) --mode=u=rwx,go=rx --directory \
+	    "${package_install_resources_root}/${htmlfiles_dirname}" ; \
+	$(INSTALL) --mode=u=rw,go=r "${HTMLFILES_DIR}"/* \
+	    "${package_install_resources_root}/${htmlfiles_dirname}" ; \
+	dh_link \
+	    --package={package} \
+	    "/${RESOURCES_DIR}/${htmlfiles_dirname}" \
+	    {install_dir}/${HTMLFILES_DIR}
+
+override_dh_installchangelogs:
+	dh_installchangelogs CHANGES.rst
+
+override_dh_installman: manpage-aliases
+	dh_installman
+
+override_dh_auto_clean:
+	dh_auto_clean
+	$(RM) -r ${GENERATED_FILES}
+
+
+# Copyright © 2010–2022 Ben Finney <bignose@debian.org>
+#
+# This is free software: you may copy, modify, and/or distribute this work
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; version 3 of that license or any later version.
+# No warranty expressed or implied.
+
+
+# Local variables:
+# mode: makefile
+# coding: utf-8
+# End:
+# vim: filetype=make fileencoding=utf-8 :

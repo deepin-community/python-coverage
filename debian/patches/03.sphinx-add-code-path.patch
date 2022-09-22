@@ -1,0 +1,28 @@
+Description: Add the code base to the import path for Sphinx's build.
+ .
+ Sphinx's ‘autodoc’ extension attempts to import the modules to document their
+ API. The modules must be importable when Sphinx is building the documentation.
+Author: Ben Finney <bignose@debian.org>
+Last-Update: 2016-09-21
+
+--- a/doc/conf.py
++++ b/doc/conf.py
+@@ -20,5 +20,5 @@ import sys, os
+ # add these directories to sys.path here. If the directory is relative to the
+ # documentation root, use os.path.abspath to make it absolute, like shown here.
+-#sys.path.append(os.path.abspath('.'))
++sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
+ # on_rtd is whether we are on readthedocs.org
+
+
+
+Local variables:
+coding: utf-8
+mode: diff
+time-stamp-format: "%:y-%02m-%02d"
+time-stamp-start: "^Last-Update:[ 	]+"
+time-stamp-end: "$"
+time-stamp-line-limit: 20
+End:
+vim: fileencoding=utf-8 filetype=diff :

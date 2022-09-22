@@ -1,0 +1,18 @@
+# debian/source/lintian-overrides
+# Overrides for Lintian checks of this source package.
+# Documentation: ‘/usr/share/doc/lintian/lintian’ §2.4.
+
+# The Apache License 2.0 requires the attribution notices to accompany the
+# package. This is satisfied already by the ‘copyright’ file.
+missing-notice-file-for-apache-license
+
+# Starting the DFSG repack count explicitly at 1 is normal, see
+# <URL:https://lists.debian.org/debian-devel/2021/10/msg00026.html>.
+anticipated-repack-count *+dfsg1-*
+
+
+# Local variables:
+# coding: utf-8
+# mode: conf-space
+# End:
+# vim: fileencoding=utf-8 filetype=conf :

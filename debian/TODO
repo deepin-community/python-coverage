@@ -1,0 +1,38 @@
+To Do list for Debian packaging
+###############################
+
+:Last-Updated: 2019-01-22
+
+To Do
+=====
+
+* Enable upstream test suite using Tox.
+
+  * Add `tox` Build-Depends.
+  * Enable Pybuild to run test suite with `tox`.
+
+
+Done
+====
+
+* Build binary packages for PyPy.
+
+  * Add `pypy` Build-Depends.
+
+* Build binary package for upstream documentation.
+
+  * Add `sphinx` Build-Depends.
+  * Enable Pybuild to build using Sphinx.
+
+
+..
+    Local variables:
+    coding: utf-8
+    mode: rst
+    mode: text
+    time-stamp-format: "%:y-%02m-%02d"
+    time-stamp-start: "^:Last-Updated:[ 	]+"
+    time-stamp-end: "$"
+    time-stamp-line-limit: 20
+    End:
+    vim: fileencoding=utf-8 filetype=rst :
