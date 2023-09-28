@@ -10,7 +10,7 @@ Files-Excluded:
 
 Files: *
 Copyright:
-    © 2004–2021 Ned Batchelder <ned@nedbatchelder.com>
+    © 2004–2023 Ned Batchelder <ned@nedbatchelder.com>
     © 2001 Gareth Rees
 License: Apache-2
 License-Grant:
@@ -28,7 +28,7 @@ License-Grant:
 
 Files: debian/*
 Copyright:
-    © 2008–2022 Ben Finney <bignose@debian.org>
+    © 2008–2023 Ben Finney <bignose@debian.org>
     © 2007–2008 Lars Wirzenius <liw@iki.fi>
 License: GPL-3+
 License-Grant:

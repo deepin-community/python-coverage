@@ -3,23 +3,27 @@
 
 # Makefile for utility work on coverage.py.
 
-help:					## Show this help.
-	@echo "Available targets:"
-	@grep '^[a-zA-Z]' $(MAKEFILE_LIST) | sort | awk -F ':.*?## ' 'NF==2 {printf "  %-26s%s\n", $$1, $$2}'
+.DEFAULT_GOAL := help
 
-clean_platform:                         ## Remove files that clash across platforms.
+##@ Utilities
+
+.PHONY: help clean_platform clean sterile
+
+clean_platform:
 	@rm -f *.so */*.so
+	@rm -f *.pyd */*.pyd
 	@rm -rf __pycache__ */__pycache__ */*/__pycache__ */*/*/__pycache__ */*/*/*/__pycache__ */*/*/*/*/__pycache__
 	@rm -f *.pyc */*.pyc */*/*.pyc */*/*/*.pyc */*/*/*/*.pyc */*/*/*/*/*.pyc
 	@rm -f *.pyo */*.pyo */*/*.pyo */*/*/*.pyo */*/*/*/*.pyo */*/*/*/*/*.pyo
+	@rm -f *$$py.class */*$$py.class */*/*$$py.class */*/*/*$$py.class */*/*/*/*$$py.class */*/*/*/*/*$$py.class
 
-clean: clean_platform                   ## Remove artifacts of test execution, installation, etc.
+clean: clean_platform			## Remove artifacts of test execution, installation, etc.
 	@echo "Cleaning..."
 	@-pip uninstall -yq coverage
-	@rm -f *.pyd */*.pyd
+	@mkdir -p build	# so the chmod won't fail if build doesn't exist
+	@chmod -R 777 build
 	@rm -rf build coverage.egg-info dist htmlcov
 	@rm -f *.bak */*.bak */*/*.bak */*/*/*.bak */*/*/*/*.bak */*/*/*/*/*.bak
-	@rm -f *$$py.class */*$$py.class */*/*$$py.class */*/*/*$$py.class */*/*/*/*$$py.class */*/*/*/*/*$$py.class
 	@rm -f coverage/*,cover
 	@rm -f MANIFEST
 	@rm -f .coverage .coverage.* coverage.xml coverage.json .metacov*
@@ -28,21 +32,22 @@ clean: clean_platform                   ## Remove artifacts of test execution, i
 	@rm -f tests/covmain.zip tests/zipmods.zip tests/zip1.zip
 	@rm -rf doc/_build doc/_spell doc/sample_html_beta
 	@rm -rf tmp
-	@rm -rf .cache .hypothesis .mypy_cache .pytest_cache
+	@rm -rf .cache .hypothesis .*_cache
 	@rm -rf tests/actual
 	@-make -C tests/gold/html clean
 
-sterile: clean                          ## Remove all non-controlled content, even if expensive.
+sterile: clean				## Remove all non-controlled content, even if expensive.
 	rm -rf .tox
+	rm -f cheats.txt
 
+help:					## Show this help.
+	@# Adapted from https://www.thapaliya.com/en/writings/well-documented-makefiles/
+	@echo Available targets:
+	@awk -F ':.*##' '/^[^: ]+:.*##/{printf "  \033[1m%-20s\033[m %s\n",$$1,$$2} /^##@/{printf "\n%s\n",substr($$0,5)}' $(MAKEFILE_LIST)
 
-CSS = coverage/htmlfiles/style.css
-SCSS = coverage/htmlfiles/style.scss
+##@ Tests and quality checks
 
-css: $(CSS)				## Compile .scss into .css.
-$(CSS): $(SCSS)
-	pysassc --style=compact $(SCSS) $@
-	cp $@ tests/gold/html/styled
+.PHONY: lint smoke
 
 lint:					## Run linters and checkers.
 	tox -q -e lint
@@ -50,10 +55,13 @@ lint:					## Run linters and checkers.
 PYTEST_SMOKE_ARGS = -n auto -m "not expensive" --maxfail=3 $(ARGS)
 
 smoke: 					## Run tests quickly with the C tracer in the lowest supported Python versions.
-	COVERAGE_NO_PYTRACER=1 tox -q -e py36 -- $(PYTEST_SMOKE_ARGS)
+	COVERAGE_NO_PYTRACER=1 tox -q -e py37 -- $(PYTEST_SMOKE_ARGS)
 
-# Coverage measurement of coverage.py itself (meta-coverage). See metacov.ini
-# for details.
+
+##@ Metacov: coverage measurement of coverage.py itself
+# 	See metacov.ini for details.
+
+.PHONY: metacov metahtml metasmoke
 
 metacov:				## Run meta-coverage, measuring ourself.
 	COVERAGE_COVERAGE=yes tox -q $(ARGS)
@@ -62,11 +70,25 @@ metahtml:				## Produce meta-coverage HTML reports.
 	python igor.py combine_html
 
 metasmoke:
-	COVERAGE_NO_PYTRACER=1 ARGS="-e py39" make clean metacov metahtml
+	COVERAGE_NO_PYTRACER=1 ARGS="-e py39" make metacov metahtml
 
-PIP_COMPILE = pip-compile --upgrade --allow-unsafe
+
+##@ Requirements management
+
+# When updating requirements, a few rules to follow:
+#
+# 1) Don't install more than one .pip file at once. Always use pip-compile to
+# combine .in files onto a single .pip file that can be installed where needed.
+#
+# 2) Check manual pins before `make upgrade` to see if they can be removed. Look
+# in requirements/pins.pip, and search for "windows" in .in files to find pins
+# and extra requirements that have been needed, but might be obsolete.
+
+.PHONY: upgrade
+
+PIP_COMPILE = pip-compile --upgrade --allow-unsafe --resolver=backtracking
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
-upgrade: 				## update the *.pip files with the latest packages satisfying *.in files
+upgrade: 				## Update the *.pip files with the latest packages satisfying *.in files.
 	pip install -q -r requirements/pip-tools.pip
 	$(PIP_COMPILE) -o requirements/pip-tools.pip requirements/pip-tools.in
 	$(PIP_COMPILE) -o requirements/pip.pip requirements/pip.in
@@ -76,8 +98,80 @@ upgrade: 				## update the *.pip files with the latest packages satisfying *.in 
 	$(PIP_COMPILE) -o requirements/dev.pip requirements/dev.in
 	$(PIP_COMPILE) -o requirements/light-threads.pip requirements/light-threads.in
 	$(PIP_COMPILE) -o doc/requirements.pip doc/requirements.in
+	$(PIP_COMPILE) -o requirements/lint.pip doc/requirements.in requirements/dev.in
+	$(PIP_COMPILE) -o requirements/mypy.pip requirements/mypy.in
 
-# Kitting
+diff_upgrade:				## Summarize the last `make upgrade`
+	@# The sort flags sort by the package name first, then by the -/+, and
+	@# sort by version numbers, so we get a summary with lines like this:
+	@#	-bashlex==0.16
+	@#	+bashlex==0.17
+	@#	-build==0.9.0
+	@#	+build==0.10.0
+	@git diff -U0 | grep -v '^@' | grep == | sort -k1.2,1.99 -k1.1,1.1r -u -V
+
+##@ Pre-builds for prepping the code
+
+.PHONY: css workflows prebuild
+
+CSS = coverage/htmlfiles/style.css
+SCSS = coverage/htmlfiles/style.scss
+
+css: $(CSS)				## Compile .scss into .css.
+$(CSS): $(SCSS)
+	pysassc --style=compact $(SCSS) $@
+	cp $@ tests/gold/html/styled
+
+workflows:				## Run cog on the workflows to keep them up-to-date.
+	python -m cogapp -crP .github/workflows/*.yml
+
+prebuild: css workflows cogdoc		## One command for all source prep.
+
+
+##@ Sample HTML reports
+
+.PHONY: _sample_cog_html sample_html sample_html_beta
+
+_sample_cog_html: clean
+	python -m pip install -e .
+	cd ~/cog; \
+		rm -rf htmlcov; \
+		PYTEST_ADDOPTS= coverage run --branch --source=cogapp -m pytest -k CogTestsInMemory; \
+		coverage combine; \
+		coverage html
+
+sample_html: _sample_cog_html		## Generate sample HTML report.
+	rm -f doc/sample_html/*.*
+	cp -r ~/cog/htmlcov/ doc/sample_html/
+	rm doc/sample_html/.gitignore
+
+sample_html_beta: _sample_cog_html	## Generate sample HTML report for a beta release.
+	rm -f doc/sample_html_beta/*.*
+	cp -r ~/cog/htmlcov/ doc/sample_html_beta/
+	rm doc/sample_html_beta/.gitignore
+
+
+##@ Kitting: making releases
+
+.PHONY: kit kit_upload test_upload kit_local build_kits download_kits check_kits tag
+.PHONY: update_stable comment_on_fixes
+
+REPO_OWNER = nedbat/coveragepy
+
+edit_for_release:			## Edit sources to insert release facts.
+	python igor.py edit_for_release
+
+cheats:					## Create some useful snippets for releasing.
+	python igor.py cheats | tee cheats.txt
+
+relbranch:				## Create the branch for releasing.
+	git switch -c nedbat/release-$$(date +%Y%m%d)
+
+relcommit1:				## Commit the first release changes.
+	git commit -am "docs: prep for $$(python setup.py --version)"
+
+relcommit2:				## Commit the latest sample HTML report.
+	git commit -am "docs: sample HTML for $$(python setup.py --version)"
 
 kit:					## Make the source distribution.
 	python -m build
@@ -86,7 +180,7 @@ kit_upload:				## Upload the built distributions to PyPI.
 	twine upload --verbose dist/*
 
 test_upload:				## Upload the distributions to PyPI's testing server.
-	twine upload --verbose --repository testpypi dist/*
+	twine upload --verbose --repository testpypi --password $$TWINE_TEST_PASSWORD dist/*
 
 kit_local:
 	# pip.conf looks like this:
@@ -97,16 +191,33 @@ kit_local:
 	# don't go crazy trying to figure out why our new code isn't installing.
 	find ~/Library/Caches/pip/wheels -name 'coverage-*' -delete
 
+build_kits:				## Trigger GitHub to build kits
+	python ci/trigger_build_kits.py $(REPO_OWNER)
+
 download_kits:				## Download the built kits from GitHub.
-	python ci/download_gha_artifacts.py nedbat/coveragepy
+	python ci/download_gha_artifacts.py $(REPO_OWNER)
 
 check_kits:				## Check that dist/* are well-formed.
 	python -m twine check dist/*
 
-build_ext:
-	python setup.py build_ext
+tag:					## Make a git tag with the version number.
+	git tag -a -m "Version $$(python setup.py --version)" $$(python setup.py --version)
+	git push --follow-tags
 
-# Documentation
+update_stable:				## Set the stable branch to the latest release.
+	git branch -f stable $$(python setup.py --version)
+	git push origin stable
+
+bump_version:				## Edit sources to bump the version after a release.
+	git switch -c nedbat/bump-version
+	python igor.py bump_version
+	git commit -a -m "build: bump version"
+	git push -u origin @
+
+
+##@ Documentation
+
+.PHONY: cogdoc dochtml docdev docspell
 
 DOCBIN = .tox/doc/bin
 SPHINXOPTS = -aE
@@ -119,7 +230,7 @@ WEBSAMPLEBETA = $(WEBHOME)/files/sample_coverage_html_beta
 $(DOCBIN):
 	tox -q -e doc --notest
 
-cogdoc: $(DOCBIN)			## Run docs through cog
+cogdoc: $(DOCBIN)			## Run docs through cog.
 	$(DOCBIN)/python -m cogapp -crP --verbosity=1 doc/*.rst
 
 dochtml: cogdoc $(DOCBIN)		## Build the docs HTML output.
@@ -131,7 +242,12 @@ docdev: dochtml				## Build docs, and auto-watch for changes.
 docspell: $(DOCBIN)			## Run the spell checker on the docs.
 	$(SPHINXBUILD) -b spelling doc doc/_spell
 
-publish:
+
+##@ Publishing docs
+
+.PHONY: publish publishbeta relnotes_json github_releases
+
+publish:				## Publish the sample HTML report.
 	rm -f $(WEBSAMPLE)/*.*
 	mkdir -p $(WEBSAMPLE)
 	cp doc/sample_html/*.* $(WEBSAMPLE)
@@ -152,5 +268,8 @@ relnotes_json: $(RELNOTES_JSON)		## Convert changelog to JSON for further parsin
 $(RELNOTES_JSON): $(CHANGES_MD)
 	$(DOCBIN)/python ci/parse_relnotes.py tmp/rst_rst/changes.md $(RELNOTES_JSON)
 
-github_releases: $(RELNOTES_JSON)	## Update GitHub releases.
-	$(DOCBIN)/python ci/github_releases.py $(RELNOTES_JSON) nedbat/coveragepy
+github_releases: $(DOCBIN)		## Update GitHub releases.
+	$(DOCBIN)/python -m scriv github-release
+
+comment_on_fixes: $(RELNOTES_JSON)	## Add a comment to issues that were fixed.
+	python ci/comment_on_fixes.py $(REPO_OWNER)

@@ -156,6 +156,10 @@ a.nav {
     }
 }
 
+.hidden {
+    display: none;
+}
+
 // Page structure
 header {
     background: $light-gray1;
@@ -172,6 +176,13 @@ header {
     h2 {
         margin-top: .5em;
         font-size: 1em;
+    }
+
+    p.text {
+        margin: .5em 0 -.5em;
+        color: $light-gray5;
+        @include color-dark($dark-gray5);
+        font-style: italic;
     }
 
     &.sticky {
@@ -208,19 +219,15 @@ main {
     z-index: 1;
 }
 
-.indexfile footer {
+footer {
     margin: 1rem $left-gutter;
-}
 
-.pyfile footer {
-    margin: 1rem 1rem;
-}
-
-footer .content {
-    padding: 0;
-    color: $light-gray5;
-    @include color-dark($dark-gray5);
-    font-style: italic;
+    .content {
+        padding: 0;
+        color: $light-gray5;
+        @include color-dark($dark-gray5);
+        font-style: italic;
+    }
 }
 
 #index {
@@ -351,6 +358,12 @@ header button {
     padding: .75em;
     border: 1px solid #883;
 
+    color: #333;
+
+    .keyhelp p {
+        margin-top: .75em;
+    }
+
     .legend {
         font-style: italic;
         margin-bottom: 1em;
@@ -358,21 +371,15 @@ header button {
 
     .indexfile & {
         width: 25em;
-        //min-height: 4em;
     }
 
     .pyfile & {
         width: 18em;
-        //min-height: 8em;
     }
 
     #help_panel_state:checked ~ & {
         display: block;
     }
-}
-
-.keyhelp {
-    margin-top: .75em;
 }
 
 kbd {
@@ -615,10 +622,7 @@ $border-indicator-width: .2em;
             @include background-dark($dark-context-bg-color);
             border-radius: .25em;
             margin-right: 1.75em;
-            span {
-                display: block;
-                text-align: right;
-            }
+            text-align: right;
         }
     }
 }

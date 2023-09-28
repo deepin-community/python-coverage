@@ -3,13 +3,20 @@
 
 """Tests for concurrency libraries."""
 
+from __future__ import annotations
+
 import glob
+import multiprocessing
 import os
+import pathlib
 import random
 import re
 import sys
 import threading
 import time
+
+from types import ModuleType
+from typing import Iterable, Optional
 
 from flaky import flaky
 import pytest
@@ -22,15 +29,9 @@ from coverage.files import abs_file
 from coverage.misc import import_local_file
 
 from tests.coveragetest import CoverageTest
-from tests.helpers import remove_files
 
 
 # These libraries aren't always available, we'll skip tests if they aren't.
-
-try:
-    import multiprocessing
-except ImportError:         # pragma: only jython
-    multiprocessing = None
 
 try:
     import eventlet
@@ -44,11 +45,11 @@ except ImportError:
 
 try:
     import greenlet
-except ImportError:         # pragma: only jython
+except ImportError:
     greenlet = None
 
 
-def measurable_line(l):
+def measurable_line(l: str) -> bool:
     """Is this a line of code coverage will measure?
 
     Not blank, not a comment, and not "else"
@@ -60,18 +61,15 @@ def measurable_line(l):
         return False
     if l.startswith('else:'):
         return False
-    if env.JYTHON and l.startswith(('try:', 'except:', 'except ', 'break', 'with ')):
-        # Jython doesn't measure these statements.
-        return False                    # pragma: only jython
     return True
 
 
-def line_count(s):
+def line_count(s: str) -> int:
     """How many measurable lines are in `s`?"""
     return len(list(filter(measurable_line, s.splitlines())))
 
 
-def print_simple_annotation(code, linenos):
+def print_simple_annotation(code: str, linenos: Iterable[int]) -> None:
     """Print the lines in `code` with X for each line number in `linenos`."""
     for lineno, line in enumerate(code.splitlines(), start=1):
         print(" {} {}".format("X" if lineno in linenos else " ", line))
@@ -82,7 +80,7 @@ class LineCountTest(CoverageTest):
 
     run_in_temp_dir = False
 
-    def test_line_count(self):
+    def test_line_count(self) -> None:
         CODE = """
             # Hey there!
             x = 1
@@ -176,7 +174,7 @@ SIMPLE = """
     """
 
 
-def cant_trace_msg(concurrency, the_module):
+def cant_trace_msg(concurrency: str, the_module: Optional[ModuleType]) -> Optional[str]:
     """What might coverage.py say about a concurrency setting and imported module?"""
     # In the concurrency choices, "multiprocessing" doesn't count, so remove it.
     if "multiprocessing" in concurrency:
@@ -204,7 +202,13 @@ class ConcurrencyTest(CoverageTest):
 
     QLIMIT = 1000
 
-    def try_some_code(self, code, concurrency, the_module, expected_out=None):
+    def try_some_code(
+        self,
+        code: str,
+        concurrency: str,
+        the_module: ModuleType,
+        expected_out: Optional[str] = None,
+    ) -> None:
         """Run some concurrency testing code and see that it was all covered.
 
         `code` is the Python code to execute.  `concurrency` is the name of
@@ -239,39 +243,40 @@ class ConcurrencyTest(CoverageTest):
             # If the test fails, it's helpful to see this info:
             fname = abs_file("try_it.py")
             linenos = data.lines(fname)
+            assert linenos is not None
             print(f"{len(linenos)}: {linenos}")
             print_simple_annotation(code, linenos)
 
             lines = line_count(code)
             assert line_counts(data)['try_it.py'] == lines
 
-    def test_threads(self):
+    def test_threads(self) -> None:
         code = (THREAD + SUM_RANGE_Q + PRINT_SUM_RANGE).format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "thread", threading)
 
-    def test_threads_simple_code(self):
+    def test_threads_simple_code(self) -> None:
         code = SIMPLE.format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "thread", threading)
 
-    def test_eventlet(self):
+    def test_eventlet(self) -> None:
         code = (EVENTLET + SUM_RANGE_Q + PRINT_SUM_RANGE).format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "eventlet", eventlet)
 
-    def test_eventlet_simple_code(self):
+    def test_eventlet_simple_code(self) -> None:
         code = SIMPLE.format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "eventlet", eventlet)
 
     # https://github.com/nedbat/coveragepy/issues/663
     @pytest.mark.skipif(env.WINDOWS, reason="gevent has problems on Windows: #663")
-    def test_gevent(self):
+    def test_gevent(self) -> None:
         code = (GEVENT + SUM_RANGE_Q + PRINT_SUM_RANGE).format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "gevent", gevent)
 
-    def test_gevent_simple_code(self):
+    def test_gevent_simple_code(self) -> None:
         code = SIMPLE.format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "gevent", gevent)
 
-    def test_greenlet(self):
+    def test_greenlet(self) -> None:
         GREENLET = """\
             from greenlet import greenlet
 
@@ -289,11 +294,11 @@ class ConcurrencyTest(CoverageTest):
             """
         self.try_some_code(GREENLET, "greenlet", greenlet, "hello world\n42\n")
 
-    def test_greenlet_simple_code(self):
+    def test_greenlet_simple_code(self) -> None:
         code = SIMPLE.format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "greenlet", greenlet)
 
-    def test_bug_330(self):
+    def test_bug_330(self) -> None:
         BUG_330 = """\
             from weakref import WeakKeyDictionary
             import eventlet
@@ -311,7 +316,7 @@ class ConcurrencyTest(CoverageTest):
             """
         self.try_some_code(BUG_330, "eventlet", eventlet, "0\n")
 
-    def test_threads_with_gevent(self):
+    def test_threads_with_gevent(self) -> None:
         self.make_file("both.py", """\
             import queue
             import threading
@@ -352,40 +357,36 @@ class ConcurrencyTest(CoverageTest):
         last_line = self.squeezed_lines(out)[-1]
         assert re.search(r"TOTAL \d+ 0 100%", last_line)
 
-    def test_bad_concurrency(self):
-        self.make_file("prog.py", "a = 1")
-        msg = "Unknown concurrency choices: nothing"
-        with pytest.raises(ConfigError, match=msg):
+    def test_bad_concurrency(self) -> None:
+        with pytest.raises(ConfigError, match="Unknown concurrency choices: nothing"):
             self.command_line("run --concurrency=nothing prog.py")
 
-    def test_bad_concurrency_in_config(self):
-        self.make_file("prog.py", "a = 1")
+    def test_bad_concurrency_in_config(self) -> None:
         self.make_file(".coveragerc", "[run]\nconcurrency = nothing\n")
-        msg = "Unknown concurrency choices: nothing"
-        with pytest.raises(ConfigError, match=msg):
+        with pytest.raises(ConfigError, match="Unknown concurrency choices: nothing"):
             self.command_line("run prog.py")
 
-    def test_no_multiple_light_concurrency(self):
-        self.make_file("prog.py", "a = 1")
-        msg = "Conflicting concurrency settings: eventlet, gevent"
-        with pytest.raises(ConfigError, match=msg):
+    def test_no_multiple_light_concurrency(self) -> None:
+        with pytest.raises(ConfigError, match="Conflicting concurrency settings: eventlet, gevent"):
             self.command_line("run --concurrency=gevent,eventlet prog.py")
 
-    def test_no_multiple_light_concurrency_in_config(self):
-        self.make_file("prog.py", "a = 1")
+    def test_no_multiple_light_concurrency_in_config(self) -> None:
         self.make_file(".coveragerc", "[run]\nconcurrency = gevent, eventlet\n")
-        msg = "Conflicting concurrency settings: eventlet, gevent"
-        with pytest.raises(ConfigError, match=msg):
+        with pytest.raises(ConfigError, match="Conflicting concurrency settings: eventlet, gevent"):
             self.command_line("run prog.py")
+
+    def test_multiprocessing_needs_config_file(self) -> None:
+        with pytest.raises(ConfigError, match="multiprocessing requires a configuration file"):
+            self.command_line("run --concurrency=multiprocessing prog.py")
 
 
 class WithoutConcurrencyModuleTest(CoverageTest):
     """Tests of what happens if the requested concurrency isn't installed."""
 
     @pytest.mark.parametrize("module", ["eventlet", "gevent", "greenlet"])
-    def test_missing_module(self, module):
+    def test_missing_module(self, module: str) -> None:
         self.make_file("prog.py", "a = 1")
-        sys.modules[module] = None
+        sys.modules[module] = None      # type: ignore[assignment]
         msg = f"Couldn't trace with concurrency={module}, the module isn't installed."
         with pytest.raises(ConfigError, match=msg):
             self.command_line(f"run --concurrency={module} prog.py")
@@ -438,14 +439,30 @@ MULTI_CODE = """
     """
 
 
-@pytest.mark.skipif(not multiprocessing, reason="No multiprocessing in this Python")
+@pytest.fixture(params=["fork", "spawn"], name="start_method")
+def start_method_fixture(request: pytest.FixtureRequest) -> str:
+    """Parameterized fixture to choose the start_method for multiprocessing."""
+    start_method: str = request.param
+    if start_method not in multiprocessing.get_all_start_methods():
+        # Windows doesn't support "fork".
+        pytest.skip(f"start_method={start_method} not supported here")
+    return start_method
+
+
 @flaky(max_runs=30)         # Sometimes a test fails due to inherent randomness. Try more times.
 class MultiprocessingTest(CoverageTest):
     """Test support of the multiprocessing module."""
 
     def try_multiprocessing_code(
-        self, code, expected_out, the_module, nprocs, concurrency="multiprocessing", args=""
-    ):
+        self,
+        code: str,
+        expected_out: Optional[str],
+        the_module: ModuleType,
+        nprocs: int,
+        start_method: str,
+        concurrency: str = "multiprocessing",
+        args: str = "",
+    ) -> None:
         """Run code using multiprocessing, it should produce `expected_out`."""
         self.make_file("multi.py", code)
         self.make_file(".coveragerc", f"""\
@@ -454,54 +471,64 @@ class MultiprocessingTest(CoverageTest):
             source = .
             """)
 
-        for start_method in ["fork", "spawn"]:
-            if start_method and start_method not in multiprocessing.get_all_start_methods():
-                continue
+        cmd = f"coverage run {args} multi.py {start_method}"
+        out = self.run_command(cmd)
+        expected_cant_trace = cant_trace_msg(concurrency, the_module)
 
-            remove_files(".coverage", ".coverage.*")
-            cmd = "coverage run {args} multi.py {start_method}".format(
-                args=args, start_method=start_method,
-            )
-            out = self.run_command(cmd)
-            expected_cant_trace = cant_trace_msg(concurrency, the_module)
+        if expected_cant_trace is not None:
+            print(out)
+            assert out == expected_cant_trace
+            pytest.skip(f"Can't test: {expected_cant_trace}")
+        else:
+            assert out.rstrip() == expected_out
+            assert len(glob.glob(".coverage.*")) == nprocs + 1
 
-            if expected_cant_trace is not None:
-                print(out)
-                assert out == expected_cant_trace
-                pytest.skip(f"Can't test: {expected_cant_trace}")
-            else:
-                assert out.rstrip() == expected_out
-                assert len(glob.glob(".coverage.*")) == nprocs + 1
-
-                out = self.run_command("coverage combine")
-                out_lines = out.splitlines()
-                assert len(out_lines) == nprocs + 1
-                assert all(
-                    re.fullmatch(r"Combined data file \.coverage\..*\.\d+\.\d+", line)
-                    for line in out_lines
+            out = self.run_command("coverage combine")
+            out_lines = out.splitlines()
+            assert len(out_lines) == nprocs + 1
+            assert all(
+                re.fullmatch(
+                    r"(Combined data file|Skipping duplicate data) \.coverage\..*\.\d+\.\d+",
+                    line
                 )
-                out = self.run_command("coverage report -m")
+                for line in out_lines
+            )
+            assert len(glob.glob(".coverage.*")) == 0
+            out = self.run_command("coverage report -m")
 
-                last_line = self.squeezed_lines(out)[-1]
-                assert re.search(r"TOTAL \d+ 0 100%", last_line)
+            last_line = self.squeezed_lines(out)[-1]
+            assert re.search(r"TOTAL \d+ 0 100%", last_line)
 
-    def test_multiprocessing_simple(self):
+    def test_multiprocessing_simple(self, start_method: str) -> None:
         nprocs = 3
         upto = 30
         code = (SQUARE_OR_CUBE_WORK + MULTI_CODE).format(NPROCS=nprocs, UPTO=upto)
         total = sum(x*x if x%2 else x*x*x for x in range(upto))
         expected_out = f"{nprocs} pids, total = {total}"
-        self.try_multiprocessing_code(code, expected_out, threading, nprocs)
+        self.try_multiprocessing_code(
+            code,
+            expected_out,
+            threading,
+            nprocs,
+            start_method=start_method,
+        )
 
-    def test_multiprocessing_append(self):
+    def test_multiprocessing_append(self, start_method: str) -> None:
         nprocs = 3
         upto = 30
         code = (SQUARE_OR_CUBE_WORK + MULTI_CODE).format(NPROCS=nprocs, UPTO=upto)
         total = sum(x*x if x%2 else x*x*x for x in range(upto))
         expected_out = f"{nprocs} pids, total = {total}"
-        self.try_multiprocessing_code(code, expected_out, threading, nprocs, args="--append")
+        self.try_multiprocessing_code(
+            code,
+            expected_out,
+            threading,
+            nprocs,
+            args="--append",
+            start_method=start_method,
+        )
 
-    def test_multiprocessing_and_gevent(self):
+    def test_multiprocessing_and_gevent(self, start_method: str) -> None:
         nprocs = 3
         upto = 30
         code = (
@@ -510,14 +537,15 @@ class MultiprocessingTest(CoverageTest):
         total = sum(sum(range((x + 1) * 100)) for x in range(upto))
         expected_out = f"{nprocs} pids, total = {total}"
         self.try_multiprocessing_code(
-            code, expected_out, eventlet, nprocs, concurrency="multiprocessing,eventlet"
+            code,
+            expected_out,
+            eventlet,
+            nprocs,
+            concurrency="multiprocessing,eventlet",
+            start_method=start_method,
         )
 
-    @pytest.mark.parametrize("start_method", ["fork", "spawn"])
-    def test_multiprocessing_with_branching(self, start_method):
-        if start_method not in multiprocessing.get_all_start_methods():
-            pytest.skip(f"{start_method} not supported here")
-
+    def test_multiprocessing_with_branching(self, start_method: str) -> None:
         nprocs = 3
         upto = 30
         code = (SQUARE_OR_CUBE_WORK + MULTI_CODE).format(NPROCS=nprocs, UPTO=upto)
@@ -541,7 +569,7 @@ class MultiprocessingTest(CoverageTest):
         last_line = self.squeezed_lines(out)[-1]
         assert re.search(r"TOTAL \d+ 0 \d+ 0 100%", last_line)
 
-    def test_multiprocessing_bootstrap_error_handling(self):
+    def test_multiprocessing_bootstrap_error_handling(self) -> None:
         # An exception during bootstrapping will be reported.
         self.make_file("multi.py", """\
             import multiprocessing
@@ -556,9 +584,9 @@ class MultiprocessingTest(CoverageTest):
             """)
         out = self.run_command("coverage run multi.py")
         assert "Exception during multiprocessing bootstrap init" in out
-        assert "Exception: Crashing because called by _bootstrap" in out
+        assert "RuntimeError: Crashing because called by _bootstrap" in out
 
-    def test_bug890(self):
+    def test_bug_890(self) -> None:
         # chdir in multiprocessing shouldn't keep us from finding the
         # .coveragerc file.
         self.make_file("multi.py", """\
@@ -578,11 +606,11 @@ class MultiprocessingTest(CoverageTest):
         assert out.splitlines()[-1] == "ok"
 
 
-def test_coverage_stop_in_threads():
+def test_coverage_stop_in_threads() -> None:
     has_started_coverage = []
     has_stopped_coverage = []
 
-    def run_thread():           # pragma: nested
+    def run_thread() -> None:           # pragma: nested
         """Check that coverage is stopping properly in threads."""
         deadline = time.time() + 5
         ident = threading.current_thread().ident
@@ -609,27 +637,28 @@ def test_coverage_stop_in_threads():
     assert has_stopped_coverage == [t.ident]
 
 
-def test_thread_safe_save_data(tmpdir):
+def test_thread_safe_save_data(tmp_path: pathlib.Path) -> None:
     # Non-regression test for: https://github.com/nedbat/coveragepy/issues/581
 
     # Create some Python modules and put them in the path
-    modules_dir = tmpdir.mkdir('test_modules')
+    modules_dir = tmp_path / "test_modules"
+    modules_dir.mkdir()
     module_names = [f"m{i:03d}" for i in range(1000)]
     for module_name in module_names:
-        modules_dir.join(module_name + ".py").write("def f(): pass\n")
+        (modules_dir / (module_name + ".py")).write_text("def f(): pass\n")
 
     # Shared variables for threads
     should_run = [True]
     imported = []
 
     old_dir = os.getcwd()
-    os.chdir(modules_dir.strpath)
+    os.chdir(modules_dir)
     try:
         # Make sure that all dummy modules can be imported.
         for module_name in module_names:
             import_local_file(module_name)
 
-        def random_load():                              # pragma: nested
+        def random_load() -> None:                      # pragma: nested
             """Import modules randomly to stress coverage."""
             while should_run[0]:
                 module_name = random.choice(module_names)
@@ -668,3 +697,116 @@ def test_thread_safe_save_data(tmpdir):
     finally:
         os.chdir(old_dir)
         should_run[0] = False
+
+
+@pytest.mark.skipif(env.WINDOWS, reason="SIGTERM doesn't work the same on Windows")
+@flaky(max_runs=3)          # Sometimes a test fails due to inherent randomness. Try more times.
+class SigtermTest(CoverageTest):
+    """Tests of our handling of SIGTERM."""
+
+    @pytest.mark.parametrize("sigterm", [False, True])
+    def test_sigterm_multiprocessing_saves_data(self, sigterm: bool) -> None:
+        # A terminated process should save its coverage data.
+        self.make_file("clobbered.py", """\
+            import multiprocessing
+            import time
+
+            def subproc(x):
+                if x.value == 3:
+                    print("THREE", flush=True)  # line 6, missed
+                else:
+                    print("NOT THREE", flush=True)
+                x.value = 0
+                time.sleep(60)
+
+            if __name__ == "__main__":
+                print("START", flush=True)
+                x = multiprocessing.Value("L", 1)
+                proc = multiprocessing.Process(target=subproc, args=(x,))
+                proc.start()
+                while x.value != 0:
+                    time.sleep(.05)
+                proc.terminate()
+                print("END", flush=True)
+            """)
+        self.make_file(".coveragerc", """\
+            [run]
+            parallel = True
+            concurrency = multiprocessing
+            """ + ("sigterm = true" if sigterm else "")
+            )
+        out = self.run_command("coverage run clobbered.py")
+        # Under the Python tracer on Linux, we get the "Trace function changed"
+        # message. Does that matter?
+        if "Trace function changed" in out:
+            lines = out.splitlines(True)
+            assert len(lines) == 5  # "trace function changed" and "self.warn("
+            out = "".join(lines[:3])
+        assert out == "START\nNOT THREE\nEND\n"
+        self.run_command("coverage combine")
+        out = self.run_command("coverage report -m")
+        if sigterm:
+            expected = "clobbered.py 17 1 94% 6"
+        else:
+            expected = "clobbered.py 17 5 71% 5-10"
+        assert self.squeezed_lines(out)[2] == expected
+
+    def test_sigterm_threading_saves_data(self) -> None:
+        # A terminated process should save its coverage data.
+        self.make_file("handler.py", """\
+            import os, signal
+
+            print("START", flush=True)
+            print("SIGTERM", flush=True)
+            os.kill(os.getpid(), signal.SIGTERM)
+            print("NOT HERE", flush=True)
+            """)
+        self.make_file(".coveragerc", """\
+            [run]
+            # The default concurrency option.
+            concurrency = thread
+            sigterm = true
+            """)
+        out = self.run_command("coverage run handler.py")
+        out_lines = out.splitlines()
+        assert len(out_lines) in [2, 3]
+        assert out_lines[:2] == ["START", "SIGTERM"]
+        if len(out_lines) == 3:
+            assert out_lines[2] == "Terminated"
+        out = self.run_command("coverage report -m")
+        expected = "handler.py 5 1 80% 6"
+        assert self.squeezed_lines(out)[2] == expected
+
+    def test_sigterm_still_runs(self) -> None:
+        # A terminated process still runs its own SIGTERM handler.
+        self.make_file("handler.py", """\
+            import multiprocessing
+            import signal
+            import time
+
+            def subproc(x):
+                print("START", flush=True)
+                def on_sigterm(signum, frame):
+                    print("SIGTERM", flush=True)
+
+                signal.signal(signal.SIGTERM, on_sigterm)
+                x.value = 0
+                time.sleep(.1)
+                print("END", flush=True)
+
+            if __name__ == "__main__":
+                x = multiprocessing.Value("L", 1)
+                proc = multiprocessing.Process(target=subproc, args=(x,))
+                proc.start()
+                while x.value != 0:
+                    time.sleep(.02)
+                proc.terminate()
+            """)
+        self.make_file(".coveragerc", """\
+            [run]
+            parallel = True
+            concurrency = multiprocessing
+            sigterm = True
+            """)
+        out = self.run_command("coverage run handler.py")
+        assert out == "START\nSIGTERM\nEND\n"

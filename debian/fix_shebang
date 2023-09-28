@@ -1,0 +1,114 @@
+#! /usr/bin/python3
+
+import argparse
+import os
+import sys
+
+sys.path.append("/usr/share/dh-python")
+import dhpython.tools
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    """ Command-line argument parser for this application. """
+
+    default_description = "Tool to change shebang line of an executable script"
+
+    def __init__(self, *args, **kwargs):
+        """ Initialise this instance. """
+        if 'description' not in kwargs:
+            kwargs['description'] = self.default_description
+
+        super().__init__(*args, **kwargs)
+
+        self.setup_arguments()
+
+    def setup_arguments(self):
+        """ Set up arguments special to this program. """
+        self.add_argument(
+            '--interpreter',
+            action='store',
+            default=sys.executable,
+            metavar="PATH",
+            help=(
+                "set interpreter to PATH"
+                " (default %(default)s)"
+            ),
+        )
+        self.add_argument(
+            'script_paths',
+            nargs='+',
+            metavar="SCRIPT",
+            help=(
+                "modify script file SCRIPT"
+            ),
+        )
+
+
+class FixShebangApplication:
+    """ Program application behaviour. """
+
+    argumentparser_class = ArgumentParser
+
+    def parse_commandline(self, argv):
+        """ Parse the command line for this application.
+
+            :param argv: Sequence of command-line arguments used to
+                invoke this application.
+            :return: ``None``.
+
+            The parsed argument collection is set on the `args`
+            attribute of this application.
+            """
+        program_args = list(argv)
+        program_path = program_args.pop(0)
+        if program_path.endswith("__main__.py"):
+            # Module is actually a Python package invoked as main.
+            program_path = os.path.dirname(program_path)
+        program_name = os.path.basename(program_path)
+
+        parser = self.argumentparser_class(prog=program_name)
+        return parser.parse_args(program_args)
+
+    def initialise(self, argv):
+        """ Initialise this application.
+
+            :param argv: Sequence of command-line arguments used to
+                invoke this application.
+            :return: ``None``.
+            """
+        self.args = self.parse_commandline(argv)
+        self.shebang_interpreter = self.args.interpreter
+
+    def run(self):
+        """ Run this application instance. """
+        for script_path in self.args.script_paths:
+            dhpython.tools.fix_shebang(script_path, self.shebang_interpreter)
+
+
+def main(argv=None):
+    """ Run the program mainline code.
+
+        :param argv: Sequence of command-line arguments used to invoke
+            this process. Default: `sys.argv`.
+        :return: Exit status (integer) for this process.
+        """
+    if argv is None:
+        argv = sys.argv
+
+    exit_status = os.EX_OK
+
+    app = FixShebangApplication()
+
+    try:
+        app.initialise(argv)
+        app.run()
+
+    except SystemExit as exc:
+        exit_status = exc.code
+
+    return exit_status
+
+
+if __name__ == '__main__':
+    exit_status = main(sys.argv)
+    sys.exit(exit_status)

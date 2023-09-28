@@ -119,6 +119,10 @@ CTracer_dealloc(CTracer *self)
 }
 
 #if TRACE_LOG
+/* Set debugging constants: a file substring and line number to start logging. */
+static const char * start_file = "badasync.py";
+static int start_line = 1;
+
 static const char *
 indent(int n)
 {
@@ -132,9 +136,6 @@ indent(int n)
 }
 
 static BOOL logging = FALSE;
-/* Set these constants to be a file substring and line number to start logging. */
-static const char * start_file = "nested.py";
-static int start_line = 1;
 
 static void
 CTracer_showlog(CTracer * self, int lineno, PyObject * filename, const char * msg)
@@ -306,6 +307,9 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
     PyObject * plugin = NULL;
     PyObject * plugin_name = NULL;
     PyObject * next_tracename = NULL;
+#ifdef RESUME
+    PyObject * pCode = NULL;
+#endif
 
     /* Borrowed references. */
     PyObject * filename = NULL;
@@ -510,6 +514,7 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
         Py_XDECREF(self->pcur_entry->file_data);
         self->pcur_entry->file_data = NULL;
         self->pcur_entry->file_tracer = Py_None;
+        frame->f_trace_lines = 0;
         SHOWLOG(PyFrame_GetLineNumber(frame), filename, "skipped");
     }
 
@@ -520,10 +525,24 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
     Py_XSETREF(frame->f_trace, (PyObject*)self);
 
     /* A call event is really a "start frame" event, and can happen for
-     * re-entering a generator also.  f_lasti is -1 for a true call, and a
-     * real byte offset for a generator re-entry.
+     * re-entering a generator also.  How we tell the difference depends on
+     * the version of Python.
      */
-    if (MyFrame_lasti(frame) < 0) {
+    BOOL real_call = FALSE;
+
+#ifdef RESUME
+    /*
+     * The current opcode is guaranteed to be RESUME. The argument
+     * determines what kind of resume it is.
+     */
+    pCode = MyCode_GetCode(MyFrame_GetCode(frame));
+    real_call = (PyBytes_AS_STRING(pCode)[MyFrame_GetLasti(frame) + 1] == 0);
+#else
+    // f_lasti is -1 for a true call, and a real byte offset for a generator re-entry.
+    real_call = (MyFrame_GetLasti(frame) < 0);
+#endif
+
+    if (real_call) {
         self->pcur_entry->last_line = -MyFrame_GetCode(frame)->co_firstlineno;
     }
     else {
@@ -534,6 +553,9 @@ ok:
     ret = RET_OK;
 
 error:
+#ifdef RESUME
+    MyCode_FreeCode(pCode);
+#endif
     Py_XDECREF(next_tracename);
     Py_XDECREF(disposition);
     Py_XDECREF(plugin);
@@ -674,6 +696,8 @@ CTracer_handle_return(CTracer *self, PyFrameObject *frame)
 {
     int ret = RET_ERROR;
 
+    PyObject * pCode = NULL;
+
     STATS( self->stats.returns++; )
     /* A near-copy of this code is above in the missing-return handler. */
     if (CTracer_set_pdata_stack(self) < 0) {
@@ -683,19 +707,36 @@ CTracer_handle_return(CTracer *self, PyFrameObject *frame)
 
     if (self->pdata_stack->depth >= 0) {
         if (self->tracing_arcs && self->pcur_entry->file_data) {
+            BOOL real_return = FALSE;
+            pCode = MyCode_GetCode(MyFrame_GetCode(frame));
+            int lasti = MyFrame_GetLasti(frame);
+            Py_ssize_t code_size = PyBytes_GET_SIZE(pCode);
+            unsigned char * code_bytes = (unsigned char *)PyBytes_AS_STRING(pCode);
+#ifdef RESUME
+            if (lasti == code_size - 2) {
+                real_return = TRUE;
+            }
+            else {
+                real_return = (code_bytes[lasti + 2] != RESUME);
+            }
+#else
             /* Need to distinguish between RETURN_VALUE and YIELD_VALUE. Read
              * the current bytecode to see what it is.  In unusual circumstances
              * (Cython code), co_code can be the empty string, so range-check
              * f_lasti before reading the byte.
              */
-            int bytecode = RETURN_VALUE;
-            PyObject * pCode = MyFrame_GetCode(frame)->co_code;
-            int lasti = MyFrame_lasti(frame);
+            BOOL is_yield = FALSE;
+            BOOL is_yield_from = FALSE;
 
-            if (lasti < PyBytes_GET_SIZE(pCode)) {
-                bytecode = PyBytes_AS_STRING(pCode)[lasti];
+            if (lasti < code_size) {
+                is_yield = (code_bytes[lasti] == YIELD_VALUE);
+                if (lasti + 2 < code_size) {
+                    is_yield_from = (code_bytes[lasti + 2] == YIELD_FROM);
+                }
             }
-            if (bytecode != YIELD_VALUE) {
+            real_return = !(is_yield || is_yield_from);
+#endif
+            if (real_return) {
                 int first = MyFrame_GetCode(frame)->co_firstlineno;
                 if (CTracer_record_pair(self, self->pcur_entry->last_line, -first) < 0) {
                     goto error;
@@ -728,6 +769,7 @@ CTracer_handle_return(CTracer *self, PyFrameObject *frame)
 
 error:
 
+    MyCode_FreeCode(pCode);
     return ret;
 }
 
@@ -756,11 +798,13 @@ CTracer_trace(CTracer *self, PyFrameObject *frame, int what, PyObject *arg_unuse
     #endif
 
     #if WHAT_LOG
+    const char * w = "XXX ";
     if (what <= (int)(sizeof(what_sym)/sizeof(const char *))) {
-        ascii = PyUnicode_AsASCIIString(MyFrame_GetCode(frame)->co_filename);
-        printf("%x trace: f:%x %s @ %s %d\n", (int)self, (int)frame, what_sym[what], PyBytes_AS_STRING(ascii), PyFrame_GetLineNumber(frame));
-        Py_DECREF(ascii);
+        w = what_sym[what];
     }
+    ascii = PyUnicode_AsASCIIString(MyFrame_GetCode(frame)->co_filename);
+    printf("%x trace: f:%x %s @ %s %d\n", (int)self, (int)frame, what_sym[what], PyBytes_AS_STRING(ascii), PyFrame_GetLineNumber(frame));
+    Py_DECREF(ascii);
     #endif
 
     #if TRACE_LOG
@@ -969,7 +1013,7 @@ CTracer_get_stats(CTracer *self, PyObject *args_unused)
 {
 #if COLLECT_STATS
     return Py_BuildValue(
-        "{sI,sI,sI,sI,sI,sI,sI,sI,si,sI,sI,sI}",
+        "{sI,sI,sI,sI,sI,sI,si,sI,sI,sI}",
         "calls", self->stats.calls,
         "lines", self->stats.lines,
         "returns", self->stats.returns,

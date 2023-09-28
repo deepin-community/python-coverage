@@ -32,7 +32,7 @@ modules).
 
 If the source option is specified, only code in those locations will be
 measured.  Specifying the source option also enables coverage.py to report on
-unexecuted files, since it can search the source tree for files that haven't
+un-executed files, since it can search the source tree for files that haven't
 been measured at all.  Only importable files (ones at the root of the tree, or
 in directories with a ``__init__.py`` file) will be considered. Files with
 unusual punctuation in their names will be skipped (they are assumed to be
@@ -57,10 +57,12 @@ file name patterns, specifying files not to measure.  If both ``include`` and
 match the include patterns, then any files that match the omit pattern are
 removed from the set.
 
-The ``include`` and ``omit`` file name patterns follow typical shell syntax:
-``*`` matches any number of characters and ``?`` matches a single character.
-Patterns that start with a wildcard character are used as-is, other patterns
-are interpreted relative to the current directory::
+.. highlight:: ini
+
+The ``include`` and ``omit`` file name patterns follow common shell syntax,
+described below in :ref:`source_glob`.  Patterns that start with a wildcard
+character are used as-is, other patterns are interpreted relative to the
+current directory::
 
     [run]
     omit =
@@ -75,7 +77,7 @@ The ``source``, ``include``, and ``omit`` values all work together to determine
 the source that will be measured.
 
 If both ``source`` and ``include`` are set, the ``include`` value is ignored
-and a warning is printed on the standard output.
+and a warning is issued.
 
 
 .. _source_reporting:
@@ -88,7 +90,8 @@ reported.  Usually you want to see all the code that was measured, but if you
 are measuring a large project, you may want to get reports for just certain
 parts.
 
-The report commands (``report``, ``html``, ``json``, ``annotate``, and ``xml``)
+The report commands (``report``, ``html``, ``json``, ``lcov``, ``annotate``,
+and ``xml``)
 all take optional ``modules`` arguments, and ``--include`` and ``--omit``
 switches. The ``modules`` arguments specify particular modules to report on.
 The ``include`` and ``omit`` values are lists of file name patterns, just as
@@ -100,3 +103,22 @@ reporting.
 
 Note that these are ways of specifying files to measure.  You can also exclude
 individual source lines.  See :ref:`excluding` for details.
+
+
+.. _source_glob:
+
+File patterns
+-------------
+
+File path patterns are used for include and omit, and for combining path
+remapping.  They follow common shell syntax:
+
+- ``*`` matches any number of file name characters, not including the directory
+  separator.
+
+- ``?`` matches a single file name character.
+
+- ``**`` matches any number of nested directory names, including none.
+
+- Both ``/`` and ``\`` will match either a slash or a backslash, to make
+  cross-platform matching easier.

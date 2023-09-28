@@ -1,35 +1,35 @@
 Metadata-Version: 2.1
 Name: coverage
-Version: 6.2
+Version: 7.2.7
 Summary: Code coverage measurement for Python
 Home-page: https://github.com/nedbat/coveragepy
-Author: Ned Batchelder and 146 others
+Author: Ned Batchelder and 213 others
 Author-email: ned@nedbatchelder.com
-License: Apache 2.0
-Project-URL: Documentation, https://coverage.readthedocs.io
+License: Apache-2.0
+Project-URL: Documentation, https://coverage.readthedocs.io/en/7.2.7
 Project-URL: Funding, https://tidelift.com/subscription/pkg/pypi-coverage?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=pypi
 Project-URL: Issues, https://github.com/nedbat/coveragepy/issues
-Project-URL: Twitter, https://twitter.com/coveragepy
+Project-URL: Mastodon, https://hachyderm.io/@coveragepy
+Project-URL: Mastodon (nedbat), https://hachyderm.io/@nedbat
 Keywords: code coverage testing
-Platform: UNKNOWN
 Classifier: Environment :: Console
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: Apache Software License
 Classifier: Operating System :: OS Independent
 Classifier: Programming Language :: Python
 Classifier: Programming Language :: Python :: 3
-Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
 Classifier: Programming Language :: Python :: 3.8
 Classifier: Programming Language :: Python :: 3.9
 Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
 Classifier: Programming Language :: Python :: Implementation :: CPython
 Classifier: Programming Language :: Python :: Implementation :: PyPy
 Classifier: Topic :: Software Development :: Quality Assurance
 Classifier: Topic :: Software Development :: Testing
 Classifier: Development Status :: 5 - Production/Stable
-Requires-Python: >=3.6
+Requires-Python: >=3.7
 Description-Content-Type: text/x-rst
 Provides-Extra: toml
 License-File: LICENSE.txt
@@ -43,11 +43,18 @@ Coverage.py
 
 Code coverage testing for Python.
 
+.. image:: https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg
+    :target: https://vshymanskyy.github.io/StandWithUkraine
+    :alt: Stand with Ukraine
+
+-------------
+
 |  |license| |versions| |status|
-|  |test-status| |quality-status| |docs| |codecov|
+|  |test-status| |quality-status| |docs| |metacov|
 |  |kit| |downloads| |format| |repos|
 |  |stars| |forks| |contributors|
-|  |tidelift| |twitter-coveragepy| |twitter-nedbat|
+|  |core-infrastructure| |open-ssf| |snyk|
+|  |tidelift| |sponsor| |mastodon-coveragepy| |mastodon-nedbat|
 
 Coverage.py measures code coverage, typically during test execution. It uses
 the code analysis tools and tracing hooks provided in the Python standard
@@ -55,18 +62,27 @@ library to determine which lines are executable, and which have been executed.
 
 Coverage.py runs on these versions of Python:
 
-* CPython 3.6 through 3.11.
-* PyPy3 7.3.7.
+.. PYVERSIONS
+
+* CPython 3.7 through 3.12.0b1
+* PyPy3 7.3.11.
 
 Documentation is on `Read the Docs`_.  Code repository and issue tracker are on
 `GitHub`_.
 
-.. _Read the Docs: https://coverage.readthedocs.io/
+.. _Read the Docs: https://coverage.readthedocs.io/en/7.2.7/
 .. _GitHub: https://github.com/nedbat/coveragepy
 
+**New in 7.x:**
+improved data combining;
+``[run] exclude_also`` setting;
+``report --format=``;
+type annotations.
 
-**New in 6.x:** dropped support for Python 2.7 and 3.5; added support for 3.10
-match/case statements.
+**New in 6.x:**
+dropped support for Python 2.7, 3.5, and 3.6;
+write data on SIGTERM;
+added support for 3.10 match/case statements.
 
 
 For Enterprise
@@ -91,9 +107,10 @@ For Enterprise
 Getting Started
 ---------------
 
-See the `Quick Start section`_ of the docs.
+Looking to run ``coverage`` on your test suite? See the `Quick Start section`_
+of the docs.
 
-.. _Quick Start section: https://coverage.readthedocs.io/#quick-start
+.. _Quick Start section: https://coverage.readthedocs.io/en/7.2.7/#quick-start
 
 
 Change history
@@ -101,15 +118,26 @@ Change history
 
 The complete history of changes is on the `change history page`_.
 
-.. _change history page: https://coverage.readthedocs.io/en/latest/changes.html
+.. _change history page: https://coverage.readthedocs.io/en/7.2.7/changes.html
+
+
+Code of Conduct
+---------------
+
+Everyone participating in the coverage.py project is expected to treat other
+people with respect and to follow the guidelines articulated in the `Python
+Community Code of Conduct`_.
+
+.. _Python Community Code of Conduct: https://www.python.org/psf/codeofconduct/
 
 
 Contributing
 ------------
 
-See the `Contributing section`_ of the docs.
+Found a bug? Want to help improve the code or documentation? See the
+`Contributing section`_ of the docs.
 
-.. _Contributing section: https://coverage.readthedocs.io/en/latest/contributing.html
+.. _Contributing section: https://coverage.readthedocs.io/en/7.2.7/contributing.html
 
 
 Security
@@ -137,7 +165,7 @@ Licensed under the `Apache 2.0 License`_.  For details, see `NOTICE.txt`_.
     :target: https://github.com/nedbat/coveragepy/actions/workflows/quality.yml
     :alt: Quality check status
 .. |docs| image:: https://readthedocs.org/projects/coverage/badge/?version=latest&style=flat
-    :target: https://coverage.readthedocs.io/
+    :target: https://coverage.readthedocs.io/en/7.2.7/
     :alt: Documentation
 .. |kit| image:: https://badge.fury.io/py/coverage.svg
     :target: https://pypi.org/project/coverage/
@@ -157,9 +185,9 @@ Licensed under the `Apache 2.0 License`_.  For details, see `NOTICE.txt`_.
 .. |license| image:: https://img.shields.io/pypi/l/coverage.svg
     :target: https://pypi.org/project/coverage/
     :alt: License
-.. |codecov| image:: https://codecov.io/github/nedbat/coveragepy/coverage.svg?branch=master&precision=2
-    :target: https://codecov.io/github/nedbat/coveragepy?branch=master
-    :alt: Coverage!
+.. |metacov| image:: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/nedbat/8c6980f77988a327348f9b02bbaf67f5/raw/metacov.json
+    :target: https://nedbat.github.io/coverage-reports/latest.html
+    :alt: Coverage reports
 .. |repos| image:: https://repology.org/badge/tiny-repos/python:coverage.svg
     :target: https://repology.org/project/python:coverage/versions
     :alt: Packaging status
@@ -175,11 +203,21 @@ Licensed under the `Apache 2.0 License`_.  For details, see `NOTICE.txt`_.
 .. |contributors| image:: https://img.shields.io/github/contributors/nedbat/coveragepy.svg?logo=github
     :target: https://github.com/nedbat/coveragepy/graphs/contributors
     :alt: Contributors
-.. |twitter-coveragepy| image:: https://img.shields.io/twitter/follow/coveragepy.svg?label=coveragepy&style=flat&logo=twitter&logoColor=4FADFF
-    :target: https://twitter.com/coveragepy
-    :alt: coverage.py on Twitter
-.. |twitter-nedbat| image:: https://img.shields.io/twitter/follow/nedbat.svg?label=nedbat&style=flat&logo=twitter&logoColor=4FADFF
-    :target: https://twitter.com/nedbat
-    :alt: nedbat on Twitter
-
-
+.. |mastodon-nedbat| image:: https://img.shields.io/badge/dynamic/json?style=flat&labelColor=450657&logo=mastodon&logoColor=ffffff&link=https%3A%2F%2Fhachyderm.io%2F%40nedbat&url=https%3A%2F%2Fhachyderm.io%2Fusers%2Fnedbat%2Ffollowers.json&query=totalItems&label=@nedbat
+    :target: https://hachyderm.io/@nedbat
+    :alt: nedbat on Mastodon
+.. |mastodon-coveragepy| image:: https://img.shields.io/badge/dynamic/json?style=flat&labelColor=450657&logo=mastodon&logoColor=ffffff&link=https%3A%2F%2Fhachyderm.io%2F%40coveragepy&url=https%3A%2F%2Fhachyderm.io%2Fusers%2Fcoveragepy%2Ffollowers.json&query=totalItems&label=@coveragepy
+    :target: https://hachyderm.io/@coveragepy
+    :alt: coveragepy on Mastodon
+.. |sponsor| image:: https://img.shields.io/badge/%E2%9D%A4-Sponsor%20me-brightgreen?style=flat&logo=GitHub
+    :target: https://github.com/sponsors/nedbat
+    :alt: Sponsor me on GitHub
+.. |core-infrastructure| image:: https://bestpractices.coreinfrastructure.org/projects/6412/badge
+    :target: https://bestpractices.coreinfrastructure.org/projects/6412
+    :alt: Core Infrastructure Initiative: passing
+.. |open-ssf| image:: https://api.securityscorecards.dev/projects/github.com/nedbat/coveragepy/badge
+    :target: https://deps.dev/pypi/coverage
+    :alt: OpenSSF Scorecard
+.. |snyk| image:: https://snyk.io/advisor/python/coverage/badge.svg
+    :target: https://snyk.io/advisor/python/coverage
+    :alt: Snyk package health
