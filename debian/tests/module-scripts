@@ -18,7 +18,6 @@ COMMAND_TEMPLATE='%s -m coverage'
 interpreter_name=(
         'python3'
         $(py3versions --supported)
-        'pypy'
 )
 
 test_input_path="$(mktemp -t --suffix=".py")"
@@ -34,7 +33,7 @@ for interpreter_name in "${interpreter_names[@]}" ; do
 done
 
 
-# Copyright © 2016–2022 Ben Finney <bignose@debian.org>
+# Copyright © 2016–2023 Ben Finney <bignose@debian.org>
 # This is free software: you may copy, modify, and/or distribute this work
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; version 3 of that license or any later version.

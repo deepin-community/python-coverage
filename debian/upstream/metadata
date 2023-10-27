@@ -19,8 +19,7 @@ Documentation: https://coverage.readthedocs.io/
 Changelog: https://github.com/nedbat/coveragepy/blob/master/CHANGES.rst
 
 
-# Copyright © 2018–2022 Ben Finney <bignose@debian.org>
-#
+# Copyright © 2018–2023 Ben Finney <bignose@debian.org>
 # This is free software; you may copy, modify, and/or distribute this work
 # under the terms of the GNU General Public License, version 3 or later.
 # No warranty expressed or implied.

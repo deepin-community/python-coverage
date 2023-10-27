@@ -1,7 +1,17 @@
 .. Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
 .. For details: https://github.com/nedbat/coveragepy/blob/master/NOTICE.txt
 
+.. This file is meant to be processed with cog to insert the latest command
+   help into the docs. If it's out of date, the quality checks will fail.
+   Running "make prebuild" will bring it up to date.
+
 .. [[[cog
+    # optparse wraps help to the COLUMNS value.  Set it here to be sure it's
+    # consistent regardless of the environment.  Has to be set before we
+    # import cmdline.py, which creates the optparse objects.
+    import os
+    os.environ["COLUMNS"] = "80"
+
     import contextlib
     import io
     import re
@@ -32,10 +42,10 @@ Command line usage
 
 When you install coverage.py, a command-line script called ``coverage`` is
 placed on your path.  To help with multi-version installs, it will also create
-either a ``coverage2`` or ``coverage3`` alias, and a ``coverage-X.Y`` alias,
-depending on the version of Python you're using.  For example, when installing
-on Python 3.7, you will be able to use ``coverage``, ``coverage3``, or
-``coverage-3.7`` on the command line.
+a ``coverage3`` alias, and a ``coverage-X.Y`` alias, depending on the version
+of Python you're using.  For example, when installing on Python 3.7, you will
+be able to use ``coverage``, ``coverage3``, or ``coverage-3.7`` on the command
+line.
 
 Coverage.py has a number of commands:
 
@@ -53,6 +63,8 @@ Coverage.py has a number of commands:
 * **xml** -- :ref:`Produce an XML report with coverage results <cmd_xml>`.
 
 * **json** -- :ref:`Produce a JSON report with coverage results <cmd_json>`.
+
+* **lcov** -- :ref:`Produce an LCOV report with coverage results <cmd_lcov>`.
 
 * **annotate** --
   :ref:`Annotate source files with coverage results <cmd_annotate>`.
@@ -128,6 +140,8 @@ There are many options:
                             Valid values are: eventlet, gevent, greenlet,
                             multiprocessing, thread, or a comma-list of them.
       --context=LABEL       The context label to record for this coverage run.
+      --data-file=OUTFILE   Write the recorded coverage data to this file.
+                            Defaults to '.coverage'. [env: COVERAGE_FILE]
       --include=PAT1,PAT2,...
                             Include only files whose paths match one of these
                             patterns. Accepts shell-style wildcards, which must be
@@ -139,8 +153,8 @@ There are many options:
       -L, --pylib           Measure coverage even inside the Python installed
                             library, which isn't done by default.
       -p, --parallel-mode   Append the machine name, process id and random number
-                            to the .coverage data file name to simplify collecting
-                            data from many processes.
+                            to the data file name to simplify collecting data from
+                            many processes.
       --source=SRC1,SRC2,...
                             A list of directories or importable names of code to
                             measure.
@@ -152,7 +166,7 @@ There are many options:
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (checksum: bf76ace21288ca9d3c558ccd5fb82b08)
+.. [[[end]]] (checksum: 05d15818e42e6f989c42894fb2b3c753)
 
 If you want :ref:`branch coverage <branch>` measurement, use the ``--branch``
 flag.  Otherwise only statement coverage is measured.
@@ -215,6 +229,9 @@ Coverage.py sets an environment variable, ``COVERAGE_RUN`` to indicate that
 your code is running under coverage measurement.  The value is not relevant,
 and may change in the future.
 
+These options can also be set in the :ref:`config_run` section of your
+.coveragerc file.
+
 
 .. _cmd_warnings:
 
@@ -224,52 +241,51 @@ Warnings
 During execution, coverage.py may warn you about conditions it detects that
 could affect the measurement process.  The possible warnings include:
 
-* ``Couldn't parse Python file XXX (couldnt-parse)`` |br|
+Couldn't parse Python file XXX (couldnt-parse)
   During reporting, a file was thought to be Python, but it couldn't be parsed
   as Python.
 
-* ``Trace function changed, measurement is likely wrong: XXX (trace-changed)``
-  |br|
+Trace function changed, data is likely wrong: XXX (trace-changed)
   Coverage measurement depends on a Python setting called the trace function.
   Other Python code in your product might change that function, which will
   disrupt coverage.py's measurement.  This warning indicates that has happened.
   The XXX in the message is the new trace function value, which might provide
   a clue to the cause.
 
-* ``Module XXX has no Python source (module-not-python)`` |br|
+Module XXX has no Python source (module-not-python)
   You asked coverage.py to measure module XXX, but once it was imported, it
   turned out not to have a corresponding .py file.  Without a .py file,
   coverage.py can't report on missing lines.
 
-* ``Module XXX was never imported (module-not-imported)`` |br|
+Module XXX was never imported (module-not-imported)
   You asked coverage.py to measure module XXX, but it was never imported by
   your program.
 
-* ``No data was collected (no-data-collected)`` |br|
+No data was collected (no-data-collected)
   Coverage.py ran your program, but didn't measure any lines as executed.
   This could be because you asked to measure only modules that never ran,
   or for other reasons.
 
-* ``Module XXX was previously imported, but not measured
-  (module-not-measured)``
-  |br|
+  To debug this problem, try using ``run --debug=trace`` to see the tracing
+  decision made for each file.
+
+Module XXX was previously imported, but not measured (module-not-measured)
   You asked coverage.py to measure module XXX, but it had already been imported
   when coverage started.  This meant coverage.py couldn't monitor its
   execution.
 
-* ``Already imported a file that will be measured: XXX (already-imported)``
-  |br|
+Already imported a file that will be measured: XXX (already-imported)
   File XXX had already been imported when coverage.py started measurement. Your
   setting for ``--source`` or ``--include`` indicates that you wanted to
   measure that file.  Lines will be missing from the coverage report since the
   execution during import hadn't been measured.
 
-* ``--include is ignored because --source is set (include-ignored)`` |br|
+\-\-include is ignored because \-\-source is set (include-ignored)
   Both ``--include`` and ``--source`` were specified while running code.  Both
   are meant to focus measurement on a particular part of your source code, so
   ``--include`` is ignored in favor of ``--source``.
 
-* ``Conflicting dynamic contexts (dynamic-conflict)`` |br|
+Conflicting dynamic contexts (dynamic-conflict)
   The ``[run] dynamic_context`` option is set in the configuration file, but
   something (probably a test runner plugin) is also calling the
   :meth:`.Coverage.switch_context` function to change the context. Only one of
@@ -281,6 +297,11 @@ collected," add this to your .coveragerc file::
 
     [run]
     disable_warnings = no-data-collected
+
+or pyproject.toml::
+
+    [tool.coverage.run]
+    disable_warnings = ['no-data-collected']
 
 
 .. _cmd_datafile:
@@ -327,7 +348,7 @@ single directory, and use the **combine** command to combine them into one
 
     $ coverage combine
 
-You can also name directories or files on the command line::
+You can also name directories or files to be combined on the command line::
 
     $ coverage combine data1.dat windows_data_files/
 
@@ -349,6 +370,45 @@ An existing combined data file is ignored and re-written. If you want to use
 runs, use the ``--append`` switch on the **combine** command.  This behavior
 was the default before version 4.2.
 
+If any of the data files can't be read, coverage.py will print a warning
+indicating the file and the problem.
+
+The original input data files are deleted once they've been combined. If you
+want to keep those files, use the ``--keep`` command-line option.
+
+.. [[[cog show_help("combine") ]]]
+.. code::
+
+    $ coverage combine --help
+    Usage: coverage combine [options] <path1> <path2> ... <pathN>
+
+    Combine data from multiple coverage files. The combined results are written to
+    a single file representing the union of the data. The positional arguments are
+    data files or directories containing data files. If no paths are provided,
+    data files in the default data file's directory are combined.
+
+    Options:
+      -a, --append          Append coverage data to .coverage, otherwise it starts
+                            clean each time.
+      --data-file=DATAFILE  Base name of the data files to operate on. Defaults to
+                            '.coverage'. [env: COVERAGE_FILE]
+      --keep                Keep original coverage files, otherwise they are
+                            deleted.
+      -q, --quiet           Don't print messages about what is happening.
+      --debug=OPTS          Debug options, separated by commas. [env:
+                            COVERAGE_DEBUG]
+      -h, --help            Get help on this command.
+      --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
+                            'setup.cfg', 'tox.ini', and 'pyproject.toml' are
+                            tried. [env: COVERAGE_RCFILE]
+.. [[[end]]] (checksum: 0bdd83f647ee76363c955bedd9ddf749)
+
+
+.. _cmd_combine_remapping:
+
+Re-mapping paths
+................
+
 To combine data for a source file, coverage has to find its data in each of the
 data files.  Different test runs may run the same source file from different
 locations. For example, different operating systems will use different paths
@@ -362,35 +422,8 @@ It might be more convenient to use the ``[run] relative_files``
 setting to store relative file paths (see :ref:`relative_files
 <config_run_relative_files>`).
 
-If any of the data files can't be read, coverage.py will print a warning
-indicating the file and the problem.
-
-The original input data files are deleted once they've been combined. If you
-want to keep those files, use the ``--keep`` command-line option.
-
-.. [[[cog show_help("combine") ]]]
-.. code::
-
-    $ coverage combine --help
-    Usage: coverage combine [options] <path1> <path2> ... <pathN>
-
-    Combine data from multiple coverage files collected with 'run -p'.  The
-    combined results are written to a single file representing the union of the
-    data. The positional arguments are data files or directories containing data
-    files. If no paths are provided, data files in the default data file's
-    directory are combined.
-
-    Options:
-      -a, --append     Append coverage data to .coverage, otherwise it starts
-                       clean each time.
-      --keep           Keep original coverage files, otherwise they are deleted.
-      -q, --quiet      Don't print messages about what is happening.
-      --debug=OPTS     Debug options, separated by commas. [env: COVERAGE_DEBUG]
-      -h, --help       Get help on this command.
-      --rcfile=RCFILE  Specify configuration file. By default '.coveragerc',
-                       'setup.cfg', 'tox.ini', and 'pyproject.toml' are tried.
-                       [env: COVERAGE_RCFILE]
-.. [[[end]]] (checksum: ddd34bbd27ab1fda8dabce80e4d67795)
+If data isn't combining properly, you can see details about the inner workings
+with ``--debug=pathmap``.
 
 
 .. _cmd_erase:
@@ -409,12 +442,15 @@ To erase the collected data, use the **erase** command:
     Erase previously collected coverage data.
 
     Options:
-      --debug=OPTS     Debug options, separated by commas. [env: COVERAGE_DEBUG]
-      -h, --help       Get help on this command.
-      --rcfile=RCFILE  Specify configuration file. By default '.coveragerc',
-                       'setup.cfg', 'tox.ini', and 'pyproject.toml' are tried.
-                       [env: COVERAGE_RCFILE]
-.. [[[end]]] (checksum: 27f64e800a037c7e8f90289affdd5f13)
+      --data-file=DATAFILE  Base name of the data files to operate on. Defaults to
+                            '.coverage'. [env: COVERAGE_FILE]
+      --debug=OPTS          Debug options, separated by commas. [env:
+                            COVERAGE_DEBUG]
+      -h, --help            Get help on this command.
+      --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
+                            'setup.cfg', 'tox.ini', and 'pyproject.toml' are
+                            tried. [env: COVERAGE_RCFILE]
+.. [[[end]]] (checksum: cfeaef66ce8d5154dc6914831030b46b)
 
 If your configuration file indicates parallel data collection, **erase** will
 remove all of the data files.
@@ -426,8 +462,8 @@ Reporting
 ---------
 
 Coverage.py provides a few styles of reporting, with the **report**, **html**,
-**annotate**, **json**, and **xml** commands.  They share a number of common
-options.
+**annotate**, **json**, **lcov**, and **xml** commands.  They share a number
+of common options.
 
 The command-line arguments are module or file names to report on, if you'd like
 to report on a subset of the data collected.
@@ -446,6 +482,9 @@ compared to that value.  If it is less, the command will exit with a status
 code of 2, indicating that the total coverage was less than your target.  This
 can be used as part of a pass/fail condition, for example in a continuous
 integration server.  This option isn't available for **annotate**.
+
+These options can also be set in your .coveragerc file. See
+:ref:`Configuration: [report] <config_report>`.
 
 
 .. _cmd_report:
@@ -481,8 +520,12 @@ as a percentage.
                             Only display data from lines covered in the given
                             contexts. Accepts Python regexes, which must be
                             quoted.
+      --data-file=INFILE    Read coverage data for report generation from this
+                            file. Defaults to '.coverage'. [env: COVERAGE_FILE]
       --fail-under=MIN      Exit with a status of 2 if the total coverage is less
                             than MIN.
+      --format=FORMAT       Output format, either text (default), markdown, or
+                            total.
       -i, --ignore-errors   Ignore errors while reading source files.
       --include=PAT1,PAT2,...
                             Include only files whose paths match one of these
@@ -505,7 +548,7 @@ as a percentage.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (checksum: e5e77534929d2579f9d022227ef97313)
+.. [[[end]]] (checksum: 167272a29d9e7eb017a592a0e0747a06)
 
 The ``-m`` flag also shows the line numbers of missing statements::
 
@@ -556,15 +599,23 @@ decimal point in coverage percentages, defaulting to none.
 
 The ``--sort`` option is the name of a column to sort the report by.
 
+The ``--format`` option controls the style of the report.  ``--format=text``
+creates plain text tables as shown above.  ``--format=markdown`` creates
+Markdown tables.  ``--format=total`` writes out a single number, the total
+coverage percentage as shown at the end of the tables, but without a percent
+sign.
+
 Other common reporting options are described above in :ref:`cmd_reporting`.
+These options can also be set in your .coveragerc file. See
+:ref:`Configuration: [report] <config_report>`.
 
 
 .. _cmd_html:
 
-HTML annotation: ``coverage html``
-----------------------------------
+HTML reporting: ``coverage html``
+---------------------------------
 
-Coverage.py can annotate your source code for which lines were executed
+Coverage.py can annotate your source code to show which lines were executed
 and which were not.  The **html** command creates an HTML report similar to the
 **report** summary, but as an HTML file.  Each module name links to the source
 file decorated to show the status of each line.
@@ -573,9 +624,10 @@ Here's a `sample report`__.
 
 __ https://nedbatchelder.com/files/sample_coverage_html/index.html
 
-Lines are highlighted green for executed, red for missing, and gray for
-excluded.  The counts at the top of the file are buttons to turn on and off
-the highlighting.
+Lines are highlighted: green for executed, red for missing, and gray for
+excluded.  If you've used branch coverage, partial branches are yellow.  The
+colored counts at the top of the file are buttons to turn on and off the
+highlighting.
 
 A number of keyboard shortcuts are available for navigating the report.
 Click the keyboard icon in the upper right to see the complete list.
@@ -596,6 +648,8 @@ Click the keyboard icon in the upper right to see the complete list.
                             quoted.
       -d DIR, --directory=DIR
                             Write the output files to DIR.
+      --data-file=INFILE    Read coverage data for report generation from this
+                            file. Defaults to '.coverage'. [env: COVERAGE_FILE]
       --fail-under=MIN      Exit with a status of 2 if the total coverage is less
                             than MIN.
       -i, --ignore-errors   Ignore errors while reading source files.
@@ -619,7 +673,7 @@ Click the keyboard icon in the upper right to see the complete list.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (checksum: 75eda57d99b6c7b736f8ab2d60cc765d)
+.. [[[end]]] (checksum: e3a1a6e24ad9b303ba06d42880ed0219)
 
 The title of the report can be set with the ``title`` setting in the
 ``[html]`` section of the configuration file, or the ``--title`` switch on
@@ -627,7 +681,7 @@ the command line.
 
 If you prefer a different style for your HTML report, you can provide your
 own CSS file to apply, by specifying a CSS file in the ``[html]`` section of
-the configuration file.  See :ref:`config_html` for details.
+the configuration file.  See :ref:`config_html_extra_css` for details.
 
 The ``-d`` argument specifies an output directory, defaulting to "htmlcov"::
 
@@ -652,6 +706,9 @@ you choose which contexts to report on, and the ``--show-contexts`` option will
 annotate lines with the contexts that ran them.  See :ref:`context_reporting`
 for details.
 
+These options can also be set in your .coveragerc file. See
+:ref:`Configuration: [html] <config_html>`.
+
 
 .. _cmd_xml:
 
@@ -672,6 +729,8 @@ compatible with `Cobertura`_.
     Generate an XML report of coverage results.
 
     Options:
+      --data-file=INFILE    Read coverage data for report generation from this
+                            file. Defaults to '.coverage'. [env: COVERAGE_FILE]
       --fail-under=MIN      Exit with a status of 2 if the total coverage is less
                             than MIN.
       -i, --ignore-errors   Ignore errors while reading source files.
@@ -691,7 +750,7 @@ compatible with `Cobertura`_.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (checksum: 7f5bcdcacbd60e32514201f24c56c17f)
+.. [[[end]]] (checksum: 8b239d89534be0b2c69489e10b1352a9)
 
 You can specify the name of the output file with the ``-o`` switch.
 
@@ -734,6 +793,8 @@ which may result in
     <class filename="hello.py">
     <class filename="baz/hello.py">
 
+These options can also be set in your .coveragerc file. See
+:ref:`Configuration: [xml] <config_xml>`.
 
 
 .. _cmd_json:
@@ -756,6 +817,8 @@ The **json** command writes coverage data to a "coverage.json" file.
                             Only display data from lines covered in the given
                             contexts. Accepts Python regexes, which must be
                             quoted.
+      --data-file=INFILE    Read coverage data for report generation from this
+                            file. Defaults to '.coverage'. [env: COVERAGE_FILE]
       --fail-under=MIN      Exit with a status of 2 if the total coverage is less
                             than MIN.
       -i, --ignore-errors   Ignore errors while reading source files.
@@ -776,12 +839,58 @@ The **json** command writes coverage data to a "coverage.json" file.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (checksum: 6fbe1ca09a8f0379a5e1794d8ac14e79)
+.. [[[end]]] (checksum: e53e60cb65d971c35d1db1c08324b72e)
 
 You can specify the name of the output file with the ``-o`` switch.  The JSON
 can be nicely formatted by specifying the ``--pretty-print`` switch.
 
 Other common reporting options are described above in :ref:`cmd_reporting`.
+These options can also be set in your .coveragerc file. See
+:ref:`Configuration: [json] <config_json>`.
+
+
+.. _cmd_lcov:
+
+LCOV reporting: ``coverage lcov``
+---------------------------------
+
+The **lcov** command writes coverage data to a "coverage.lcov" file.
+
+.. [[[cog show_help("lcov") ]]]
+.. code::
+
+    $ coverage lcov --help
+    Usage: coverage lcov [options] [modules]
+
+    Generate an LCOV report of coverage results.
+
+    Options:
+      --data-file=INFILE    Read coverage data for report generation from this
+                            file. Defaults to '.coverage'. [env: COVERAGE_FILE]
+      --fail-under=MIN      Exit with a status of 2 if the total coverage is less
+                            than MIN.
+      -i, --ignore-errors   Ignore errors while reading source files.
+      --include=PAT1,PAT2,...
+                            Include only files whose paths match one of these
+                            patterns. Accepts shell-style wildcards, which must be
+                            quoted.
+      -o OUTFILE            Write the LCOV report to this file. Defaults to
+                            'coverage.lcov'
+      --omit=PAT1,PAT2,...  Omit files whose paths match one of these patterns.
+                            Accepts shell-style wildcards, which must be quoted.
+      -q, --quiet           Don't print messages about what is happening.
+      --debug=OPTS          Debug options, separated by commas. [env:
+                            COVERAGE_DEBUG]
+      -h, --help            Get help on this command.
+      --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
+                            'setup.cfg', 'tox.ini', and 'pyproject.toml' are
+                            tried. [env: COVERAGE_RCFILE]
+.. [[[end]]] (checksum: 16acfbae8011d2e3b620695c5fe13746)
+
+Common reporting options are described above in :ref:`cmd_reporting`.
+Also see :ref:`Configuration: [lcov] <config_lcov>`.
+
+.. versionadded:: 6.3
 
 
 .. _cmd_annotate:
@@ -831,6 +940,8 @@ For example::
     Options:
       -d DIR, --directory=DIR
                             Write the output files to DIR.
+      --data-file=INFILE    Read coverage data for report generation from this
+                            file. Defaults to '.coverage'. [env: COVERAGE_FILE]
       -i, --ignore-errors   Ignore errors while reading source files.
       --include=PAT1,PAT2,...
                             Include only files whose paths match one of these
@@ -844,7 +955,7 @@ For example::
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (checksum: 8c3175a256f38215016d03b66de23d5b)
+.. [[[end]]] (checksum: fd7d8fbd2dd6e24d37f868b389c2ad6d)
 
 Other common reporting options are described above in :ref:`cmd_reporting`.
 
@@ -860,12 +971,13 @@ command can often help::
 
     $ coverage debug sys > please_attach_to_bug_report.txt
 
-Three types of information are available:
+A few types of information are available:
 
 * ``config``: show coverage's configuration
 * ``sys``: show system configuration
 * ``data``: show a summary of the collected coverage data
 * ``premain``: show the call stack invoking coverage
+* ``pybehave``: show internal flags describing Python behavior
 
 .. [[[cog show_help("debug") ]]]
 .. code::
@@ -876,7 +988,8 @@ Three types of information are available:
     Display information about the internals of coverage.py, for diagnosing
     problems. Topics are: 'data' to show a summary of the collected data; 'sys' to
     show installation information; 'config' to show the configuration; 'premain'
-    to show what is calling coverage.
+    to show what is calling coverage; 'pybehave' to show internal flags describing
+    Python behavior.
 
     Options:
       --debug=OPTS     Debug options, separated by commas. [env: COVERAGE_DEBUG]
@@ -884,7 +997,7 @@ Three types of information are available:
       --rcfile=RCFILE  Specify configuration file. By default '.coveragerc',
                        'setup.cfg', 'tox.ini', and 'pyproject.toml' are tried.
                        [env: COVERAGE_RCFILE]
-.. [[[end]]] (checksum: 66c36bb462796800400d588fa5a71c5f)
+.. [[[end]]] (checksum: c9b8dfb644da3448830b1c99bffa6880)
 
 .. _cmd_run_debug:
 
@@ -906,7 +1019,12 @@ of operation to log:
 
 * ``dataop``: log when data is added to the CoverageData object.
 
+* ``lock``: log operations acquiring locks in the data layer.
+
 * ``multiproc``: log the start and stop of multiprocessing processes.
+
+* ``pathmap``: log the remapping of paths that happens during ``coverage
+  combine``. See :ref:`config_paths`.
 
 * ``pid``: annotate all warnings and debug output with the process and thread
   ids.
@@ -914,11 +1032,18 @@ of operation to log:
 * ``plugin``: print information about plugin operations.
 
 * ``process``: show process creation information, and changes in the current
-  directory.
+  directory.  This also writes a time stamp and command arguments into the data
+  file.
+
+* ``pybehave``: show the values of `internal flags <env.py_>`_ describing the
+  behavior of the current version of Python.
 
 * ``self``: annotate each debug message with the object printing the message.
 
 * ``sql``: log the SQL statements used for recording data.
+
+* ``sqldata``: when used with ``debug=sql``, also log the full data being used
+  in SQL statements.
 
 * ``sys``: before starting, dump all the system and environment information,
   as with :ref:`coverage debug sys <cmd_debug>`.
@@ -926,10 +1051,15 @@ of operation to log:
 * ``trace``: print every decision about whether to trace a file or not. For
   files not being traced, the reason is also given.
 
-Debug options can also be set with the ``COVERAGE_DEBUG`` environment variable,
-a comma-separated list of these options.
+.. _env.py: https://github.com/nedbat/coveragepy/blob/master/coverage/env.py
 
-The debug output goes to stderr, unless the ``COVERAGE_DEBUG_FILE`` environment
-variable names a different file, which will be appended to.
-``COVERAGE_DEBUG_FILE`` accepts the special names ``stdout`` and ``stderr`` to
-write to those destinations.
+Debug options can also be set with the ``COVERAGE_DEBUG`` environment variable,
+a comma-separated list of these options, or in the :ref:`config_run_debug`
+section of the .coveragerc file.
+
+The debug output goes to stderr, unless the :ref:`config_run_debug_file`
+setting or the ``COVERAGE_DEBUG_FILE`` environment variable names a different
+file, which will be appended to.  This can be useful because many test runners
+capture output, which could hide important details.  ``COVERAGE_DEBUG_FILE``
+accepts the special names ``stdout`` and ``stderr`` to write to those
+destinations.

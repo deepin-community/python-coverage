@@ -1,15 +1,79 @@
-python-coverage (6.2+dfsg1-2) UNRELEASED; urgency=medium
+python-coverage (7.2.7+dfsg1-1) unstable; urgency=medium
 
-  * update
+  * The “Adele Puglisi” release.
+  * Note that release 6.5.0+dfsg1-3 Closes: bug#1040850.
+    The previous changelog entry gave the incorrect bug report number.
+  * New upstream version.
+    Highlights since previous release:
+    * Changes to filename pattern matching and path remapping.
+      These might require changing configuration for Coverage.py.
+      See the “Migrating between versions” section of the documentation.
+    * New output formats for ‘report’.
+    * Empty source file no longer fails with ‘--fail-under’.
+    * Filename parameters in API now also accept a ‘pathlib.Path’ object.
+  * Refresh patches for new upstream version.
 
- -- Ben Finney <bignose@debian.org>  Wed, 06 Jul 2022 14:38:04 +0800
+ -- Ben Finney <bignose@debian.org>  Sun, 23 Jul 2023 13:49:58 +1000
+
+python-coverage (6.5.0+dfsg1-3) unstable; urgency=medium
+
+  * Declare conformance to “Standards-Version: 4.6.2”.
+    No additional changes required.
+  * Explicitly mark superficial AutoPkgTest cases.
+  * Use external package ‘python3-package-smoke-test’ for AutoPkgTest.
+    Closes: bug#1040846. Thanks to Matthias Klose for the report.
+  * debian/tests/smoke_test.py:
+    * Remove unused test helper module, now migrated to external package.
+
+ -- Ben Finney <bignose@debian.org>  Fri, 21 Jul 2023 14:59:32 +1000
+
+python-coverage (6.5.0+dfsg1-2) unstable; urgency=medium
+
+  * Team upload.
+  * Drop old pypy remainings (Closes: #1026466)
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Wed, 28 Dec 2022 20:23:31 +0100
+
+python-coverage (6.5.0+dfsg1-1) unstable; urgency=medium
+
+  * The “Yassmin Abdel-Magied” release.
+  * New upstream version.
+    Highlights since previous release:
+    * Support Python version 3.7 – 3.11.
+    * Build successfully on Python 3.11.
+      Closes: bug#1024148. Thanks to Adrian Bunk for the report.
+    * New ‘lcov’ command to generate reports in LCOV format.
+    * Write the coverage data file when SIGTERM is received.
+    * Write the coverage data in a way that better handles multiple
+      processes writing to it.
+    * The JSON report now contains details for branch coverage per file.
+  * Update years of copyright publication.
+  * Use wildcard for version string in context for Lintian overrides.
+  * Override false positive Lintian check for VCS-* field names.
+  * Override false positives for HTML files as test data.
+  * Test all supported Python versions in entry point script AutoPkgTest.
+  * Remove overrides for checks that Lintian now gets correct.
+  * Update Lintian overrides for current output from Lintian report.
+  * Ensure AutoPkgTest scripts don't default to use package source code.
+  * Declare conformance to “Standards-Version: 4.6.1”.
+    No additional changes required.
+  * Migrate package documentation to link to ‘python-coverage-doc’.
+  * Install a console script for each Debian supported Python version.
+    Closes: bug#955763. Thanks to Uwe Hermann for the report.
+  * debian/patches/02.rename-public-programs.patch:
+    * Defer to Debian packaging the installation of per-version scripts.
+  * Override a Lintian false positive for versioned interpreter.
+  * debian/patches/03.sphinx-add-code-path.patch:
+    * Remove patch no longer needed with current builds.
+
+ -- Ben Finney <bignose@debian.org>  Sat, 19 Nov 2022 22:27:56 +1100
 
 python-coverage (6.2+dfsg1-2) unstable; urgency=medium
 
   * Correct autopkgtest control, for removal of ‘pypy-coverage’.
     Closes: bug#1003700. Thanks to Stefano Rivera for the report.
 
- -- Ben Finney <bignose@debian.org>  Fri, 14 Jan 2022 10:43:38 +1100
+ -- Ben Finney <bignose@debian.org>  Fri, 14 Jan 2022 10:15:01 +1100
 
 python-coverage (6.2+dfsg1-1) unstable; urgency=medium
 

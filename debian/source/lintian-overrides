@@ -2,6 +2,11 @@
 # Overrides for Lintian checks of this source package.
 # Documentation: ‘/usr/share/doc/lintian/lintian’ §2.4.
 
+# “VCS” is the canonical spelling of that initialism.
+# Lintian should ignore case of control field names. Debian bug#1010241.
+cute-field VCS-Browser vs Vcs-Browser [debian/control:*]
+cute-field VCS-Git vs Vcs-Git [debian/control:*]
+
 # The Apache License 2.0 requires the attribution notices to accompany the
 # package. This is satisfied already by the ‘copyright’ file.
 missing-notice-file-for-apache-license
@@ -9,6 +14,11 @@ missing-notice-file-for-apache-license
 # Starting the DFSG repack count explicitly at 1 is normal, see
 # <URL:https://lists.debian.org/debian-devel/2021/10/msg00026.html>.
 anticipated-repack-count *+dfsg1-*
+
+# The upstream test cases use HTML files as “snapshot” data for comparison.
+# These are already the source form for the work.
+source-is-missing [tests/gold/html/*/*.html]
+very-long-line-length-in-source-file * > * [tests/gold/html/*/*.html:*]
 
 
 # Local variables:

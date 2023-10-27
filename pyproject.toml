@@ -1,0 +1,66 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/nedbat/coveragepy/blob/master/NOTICE.txt
+
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+follow_imports = "silent"
+ignore_missing_imports = true
+no_implicit_optional = true
+show_error_codes = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+exclude = """(?x)(
+    ^coverage/fullcoverage/encodings\\.py$      # can't import things into it.
+    | ^tests/balance_xdist_plugin\\.py$         # not part of our test suite.
+    )"""
+
+[tool.pytest.ini_options]
+addopts = "-q -n auto -p no:legacypath --strict-markers --no-flaky-report -rfEX --failed-first"
+python_classes = "*Test"
+markers = [
+    "expensive: too slow to run during \"make smoke\"",
+]
+
+# How come these warnings are suppressed successfully here, but not in conftest.py??
+filterwarnings = [
+    "ignore:the imp module is deprecated in favour of importlib:DeprecationWarning",
+    "ignore:distutils Version classes are deprecated:DeprecationWarning",
+    "ignore:The distutils package is deprecated and slated for removal in Python 3.12:DeprecationWarning",
+]
+
+# xfail tests that pass should fail the test suite
+xfail_strict = true
+
+balanced_clumps = [
+    # Because of expensive session-scoped fixture:
+    "VirtualenvTest",
+    # Because of shared-file manipulations (~/tests/actual/testing):
+    "CompareTest",
+    # No idea why this one fails if run on separate workers:
+    "GetZipBytesTest",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.scriv]
+# Changelog management: https://pypi.org/project/scriv/
+format = "rst"
+output_file = "CHANGES.rst"
+insert_marker = "scriv-start-here"
+end_marker = "scriv-end-here"
+ghrel_template = "file: ci/ghrel_template.md.j2"

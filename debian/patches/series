@@ -1,3 +1,13 @@
+# debian/patches/series
+# Patch file names to be applied when extracting Debian source package.
+# Manual page: ‘dpkg-source(1)’, ‘quilt(1)’.
+
 01.omit-resource-files-from-distutils-setup.patch
 02.rename-public-programs.patch
-03.sphinx-add-code-path.patch
+
+
+# Local variables:
+# coding: utf-8
+# mode: conf
+# End:
+# vim: fileencoding=utf-8 filetype=conf :

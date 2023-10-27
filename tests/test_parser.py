@@ -3,18 +3,23 @@
 
 """Tests for coverage.py's code parsing."""
 
+from __future__ import annotations
+
+import ast
 import os.path
 import textwrap
 import warnings
+
+from typing import List
 
 import pytest
 
 from coverage import env
 from coverage.exceptions import NotPython
-from coverage.parser import ast_dump, ast_parse, PythonParser
+from coverage.parser import ast_dump, PythonParser
 
 from tests.coveragetest import CoverageTest, TESTS_DIR
-from tests.helpers import arcz_to_arcs, re_lines
+from tests.helpers import arcz_to_arcs, re_lines, xfail_pypy38
 
 
 class PythonParserTest(CoverageTest):
@@ -22,14 +27,14 @@ class PythonParserTest(CoverageTest):
 
     run_in_temp_dir = False
 
-    def parse_source(self, text):
+    def parse_source(self, text: str) -> PythonParser:
         """Parse `text` as source, and return the `PythonParser` used."""
         text = textwrap.dedent(text)
         parser = PythonParser(text=text, exclude="nocover")
         parser.parse_source()
         return parser
 
-    def test_exit_counts(self):
+    def test_exit_counts(self) -> None:
         parser = self.parse_source("""\
             # check some basic branch counting
             class Foo:
@@ -43,10 +48,10 @@ class PythonParserTest(CoverageTest):
                 pass
             """)
         assert parser.exit_counts() == {
-            2:2, 3:1, 4:2, 5:1, 7:1, 9:2, 10:1
-            }
+            2:1, 3:1, 4:2, 5:1, 7:1, 9:1, 10:1
+        }
 
-    def test_generator_exit_counts(self):
+    def test_generator_exit_counts(self) -> None:
         # https://github.com/nedbat/coveragepy/issues/324
         parser = self.parse_source("""\
             def gen(input):
@@ -62,7 +67,7 @@ class PythonParserTest(CoverageTest):
             5:1,    # list -> exit
         }
 
-    def test_try_except(self):
+    def test_try_except(self) -> None:
         parser = self.parse_source("""\
             try:
                 a = 2
@@ -76,9 +81,9 @@ class PythonParserTest(CoverageTest):
             """)
         assert parser.exit_counts() == {
             1: 1, 2:1, 3:2, 4:1, 5:2, 6:1, 7:1, 8:1, 9:1
-            }
+        }
 
-    def test_excluded_classes(self):
+    def test_excluded_classes(self) -> None:
         parser = self.parse_source("""\
             class Foo:
                 def __init__(self):
@@ -89,10 +94,10 @@ class PythonParserTest(CoverageTest):
                     pass
             """)
         assert parser.exit_counts() == {
-            1:1, 2:1, 3:1
-            }
+            1:0, 2:1, 3:1
+        }
 
-    def test_missing_branch_to_excluded_code(self):
+    def test_missing_branch_to_excluded_code(self) -> None:
         parser = self.parse_source("""\
             if fooey:
                 a = 2
@@ -120,10 +125,10 @@ class PythonParserTest(CoverageTest):
             """)
         assert parser.exit_counts() == { 1:1, 2:1, 3:1, 6:1 }
 
-    def test_indentation_error(self):
+    def test_indentation_error(self) -> None:
         msg = (
             "Couldn't parse '<code>' as Python source: " +
-            "'unindent does not match any outer indentation level' at line 3"
+            "'unindent does not match any outer indentation level.*' at line 3"
         )
         with pytest.raises(NotPython, match=msg):
             _ = self.parse_source("""\
@@ -132,18 +137,21 @@ class PythonParserTest(CoverageTest):
                  1
                 """)
 
-    def test_token_error(self):
-        msg = "Couldn't parse '<code>' as Python source: 'EOF in multi-line string' at line 1"
+    def test_token_error(self) -> None:
+        submsgs = [
+            r"EOF in multi-line string",                                        # before 3.12.0b1
+            r"unterminated triple-quoted string literal .detected at line 1.",  # after 3.12.0b1
+        ]
+        msg = (
+            r"Couldn't parse '<code>' as Python source: '"
+            + r"(" + "|".join(submsgs) + ")"
+            + r"' at line 1"
+        )
         with pytest.raises(NotPython, match=msg):
-            _ = self.parse_source("""\
-                '''
-                """)
+            _ = self.parse_source("'''")
 
-    @pytest.mark.xfail(
-        env.PYPY and env.PYPYVERSION == (7, 3, 0),
-        reason="https://bitbucket.org/pypy/pypy/issues/3139",
-    )
-    def test_decorator_pragmas(self):
+    @xfail_pypy38
+    def test_decorator_pragmas(self) -> None:
         parser = self.parse_source("""\
             # 1
 
@@ -178,7 +186,8 @@ class PythonParserTest(CoverageTest):
         assert parser.raw_statements == raw_statements
         assert parser.statements == {8}
 
-    def test_decorator_pragmas_with_colons(self):
+    @xfail_pypy38
+    def test_decorator_pragmas_with_colons(self) -> None:
         # A colon in a decorator expression would confuse the parser,
         # ending the exclusion of the decorated function.
         parser = self.parse_source("""\
@@ -198,7 +207,7 @@ class PythonParserTest(CoverageTest):
         assert parser.raw_statements == raw_statements
         assert parser.statements == set()
 
-    def test_class_decorator_pragmas(self):
+    def test_class_decorator_pragmas(self) -> None:
         parser = self.parse_source("""\
             class Foo(object):
                 def __init__(self):
@@ -212,7 +221,7 @@ class PythonParserTest(CoverageTest):
         assert parser.raw_statements == {1, 2, 3, 5, 6, 7, 8}
         assert parser.statements == {1, 2, 3}
 
-    def test_empty_decorated_function(self):
+    def test_empty_decorated_function(self) -> None:
         parser = self.parse_source("""\
             def decorator(func):
                 return func
@@ -240,9 +249,25 @@ class PythonParserTest(CoverageTest):
             expected_arcs.update(set(arcz_to_arcs("-46 6-4")))
             expected_exits.update({6: 1})
 
+        if env.PYBEHAVIOR.trace_decorator_line_again:
+            expected_arcs.update(set(arcz_to_arcs("54 98")))
+            expected_exits.update({9: 2, 5: 2})
+
         assert expected_statements == parser.statements
         assert expected_arcs == parser.arcs()
         assert expected_exits == parser.exit_counts()
+
+    def test_fuzzed_double_parse(self) -> None:
+        # https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=50381
+        # The second parse used to raise `TypeError: 'NoneType' object is not iterable`
+        msg = (
+            r"(EOF in multi-line statement)"        # before 3.12.0b1
+            + r"|(unmatched ']')"                   # after 3.12.0b1
+        )
+        with pytest.raises(NotPython, match=msg):
+            self.parse_source("]")
+        with pytest.raises(NotPython, match=msg):
+            self.parse_source("]")
 
 
 class ParserMissingArcDescriptionTest(CoverageTest):
@@ -250,13 +275,13 @@ class ParserMissingArcDescriptionTest(CoverageTest):
 
     run_in_temp_dir = False
 
-    def parse_text(self, source):
+    def parse_text(self, source: str) -> PythonParser:
         """Parse Python source, and return the parser object."""
         parser = PythonParser(text=textwrap.dedent(source))
         parser.parse_source()
         return parser
 
-    def test_missing_arc_description(self):
+    def test_missing_arc_description(self) -> None:
         # This code is never run, so the actual values don't matter.
         parser = self.parse_text("""\
             if x:
@@ -292,7 +317,7 @@ class ParserMissingArcDescriptionTest(CoverageTest):
         )
         assert expected == parser.missing_arc_description(11, 13)
 
-    def test_missing_arc_descriptions_for_small_callables(self):
+    def test_missing_arc_descriptions_for_small_callables(self) -> None:
         parser = self.parse_text("""\
             callables = [
                 lambda: 2,
@@ -306,12 +331,13 @@ class ParserMissingArcDescriptionTest(CoverageTest):
         assert expected == parser.missing_arc_description(2, -2)
         expected = "line 3 didn't finish the generator expression on line 3"
         assert expected == parser.missing_arc_description(3, -3)
-        expected = "line 4 didn't finish the dictionary comprehension on line 4"
-        assert expected == parser.missing_arc_description(4, -4)
-        expected = "line 5 didn't finish the set comprehension on line 5"
-        assert expected == parser.missing_arc_description(5, -5)
+        if env.PYBEHAVIOR.comprehensions_are_functions:
+            expected = "line 4 didn't finish the dictionary comprehension on line 4"
+            assert expected == parser.missing_arc_description(4, -4)
+            expected = "line 5 didn't finish the set comprehension on line 5"
+            assert expected == parser.missing_arc_description(5, -5)
 
-    def test_missing_arc_descriptions_for_exceptions(self):
+    def test_missing_arc_descriptions_for_exceptions(self) -> None:
         parser = self.parse_text("""\
             try:
                 pass
@@ -331,7 +357,7 @@ class ParserMissingArcDescriptionTest(CoverageTest):
         )
         assert expected == parser.missing_arc_description(5, 6)
 
-    def test_missing_arc_descriptions_for_finally(self):
+    def test_missing_arc_descriptions_for_finally(self) -> None:
         parser = self.parse_text("""\
             def function():
                 for i in range(2):
@@ -405,7 +431,7 @@ class ParserMissingArcDescriptionTest(CoverageTest):
             )
             assert expected == parser.missing_arc_description(18, -1)
 
-    def test_missing_arc_descriptions_bug460(self):
+    def test_missing_arc_descriptions_bug460(self) -> None:
         parser = self.parse_text("""\
             x = 1
             d = {
@@ -417,7 +443,7 @@ class ParserMissingArcDescriptionTest(CoverageTest):
         assert parser.missing_arc_description(2, -3) == "line 3 didn't finish the lambda on line 3"
 
     @pytest.mark.skipif(not env.PYBEHAVIOR.match_case, reason="Match-case is new in 3.10")
-    def test_match_case_with_default(self):
+    def test_match_case_with_default(self) -> None:
         parser = self.parse_text("""\
             for command in ["huh", "go home", "go n"]:
                 match command.split():
@@ -429,16 +455,16 @@ class ParserMissingArcDescriptionTest(CoverageTest):
             """)
         assert parser.missing_arc_description(3, 4) == (
             "line 3 didn't jump to line 4, because the pattern on line 3 never matched"
-            )
+        )
         assert parser.missing_arc_description(3, 5) == (
             "line 3 didn't jump to line 5, because the pattern on line 3 always matched"
-            )
+        )
 
 
 class ParserFileTest(CoverageTest):
     """Tests for coverage.py's code parsing from files."""
 
-    def parse_file(self, filename):
+    def parse_file(self, filename: str) -> PythonParser:
         """Parse `text` as source, and return the `PythonParser` used."""
         parser = PythonParser(filename=filename, exclude="nocover")
         parser.parse_source()
@@ -447,7 +473,7 @@ class ParserFileTest(CoverageTest):
     @pytest.mark.parametrize("slug, newline", [
         ("unix", "\n"), ("dos", "\r\n"), ("mac", "\r"),
     ])
-    def test_line_endings(self, slug, newline):
+    def test_line_endings(self, slug: str, newline: str) -> None:
         text = """\
             # check some basic branch counting
             class Foo:
@@ -460,20 +486,20 @@ class ParserFileTest(CoverageTest):
             class Bar:
                 pass
             """
-        counts = { 2:2, 3:1, 4:2, 5:1, 7:1, 9:2, 10:1 }
+        counts = { 2:1, 3:1, 4:2, 5:1, 7:1, 9:1, 10:1 }
         fname = slug + ".py"
         self.make_file(fname, text, newline=newline)
         parser = self.parse_file(fname)
         assert parser.exit_counts() == counts, f"Wrong for {fname!r}"
 
-    def test_encoding(self):
+    def test_encoding(self) -> None:
         self.make_file("encoded.py", """\
             coverage = "\xe7\xf6v\xear\xe3g\xe9"
             """)
         parser = self.parse_file("encoded.py")
         assert parser.exit_counts() == {1: 1}
 
-    def test_missing_line_ending(self):
+    def test_missing_line_ending(self) -> None:
         # Test that the set of statements is the same even if a final
         # multi-line statement has no final newline.
         # https://github.com/nedbat/coveragepy/issues/293
@@ -502,12 +528,13 @@ class ParserFileTest(CoverageTest):
         assert parser.statements == {1}
 
 
-def test_ast_dump():
+def test_ast_dump() -> None:
     # Run the AST_DUMP code to make sure it doesn't fail, with some light
     # assertions. Use parser.py as the test code since it is the longest file,
     # and fitting, since it's the AST_DUMP code.
+    import coverage.parser
     files = [
-        os.path.join(TESTS_DIR, "../coverage/parser.py"),
+        coverage.parser.__file__,
         os.path.join(TESTS_DIR, "stress_phystoken.tok"),
     ]
     for fname in files:
@@ -516,9 +543,9 @@ def test_ast_dump():
             num_lines = len(source.splitlines())
             with warnings.catch_warnings():
                 # stress_phystoken.tok has deprecation warnings, suppress them.
-                warnings.filterwarnings("ignore", message=r".*invalid escape sequence",)
-                ast_root = ast_parse(source)
-        result = []
+                warnings.filterwarnings("ignore", message=r".*invalid escape sequence")
+                ast_root = ast.parse(source)
+        result: List[str] = []
         ast_dump(ast_root, print=result.append)
         if num_lines < 100:
             continue
