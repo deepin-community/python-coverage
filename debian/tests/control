@@ -7,40 +7,44 @@
 # information, grant of license, and disclaimer of warranty.
 
 Tests: smoke-python3
+Restrictions:
+    superficial
 Depends:
-    python3-coverage,
-    python3-pkg-resources,
-    python3-all
+    python3-package-smoke-test,
+    python3-all,
+    @
 
 Test-Command:
     w3m -dump /usr/share/doc/python-coverage-doc/html/index.html > /dev/null
+Restrictions:
+    superficial
+    build-needed
 Depends:
     python-coverage-doc,
     w3m
-Restrictions:
-    build-needed
 
 Test-Command:
     file --brief /usr/share/doc/python-coverage-doc/html/index.html
         | grep -q 'HTML document'
+Restrictions:
+    superficial
+    build-needed
 Depends:
     python-coverage-doc,
     file
-Restrictions:
-    build-needed
 
 Tests: entry-point-scripts
 Depends:
-    python3-coverage,
-    python3-all
+    python3-all,
+    @
 
 Tests: module-scripts
 Depends:
-    python3-coverage,
-    python3-all
+    python3-all,
+    @
 
 
-# Copyright © 2016–2022 Ben Finney <bignose@debian.org>
+# Copyright © 2016–2023 Ben Finney <bignose@debian.org>
 # This is free software: you may copy, modify, and/or distribute this work
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; version 3 of that license or any later version.

@@ -1,0 +1,16 @@
+# debian/python-coverage-doc.maintscript
+# Maintainer script helper commands for ‘python-coverage-doc’ package.
+#
+# Manual page: ‘dh_installdeb(1)’, ‘dpkg-maintscript-helper(1)’.
+
+# This documentation package documentation is now relevant for all binary
+# packages. Migrate existing documentation directories to symlink to the
+# documentation package directory.
+dir_to_symlink /usr/share/doc/@PACKAGE@ ../python3-coverage 6.2+dfsg1-2~
+
+
+# Local variables:
+# coding: utf-8
+# mode: sh
+# End:
+# vim: fileencoding=utf-8 filetype=sh :

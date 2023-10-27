@@ -16,17 +16,18 @@ not.
 The latest version is coverage.py |release|, released |release_date|.  It is
 supported on:
 
-* Python versions 3.6 through 3.11.
+.. PYVERSIONS
 
-* PyPy3 7.3.7.
+* Python versions 3.7 through 3.12.0b1.
+* PyPy3 7.3.11.
 
 .. ifconfig:: prerelease
 
     **This is a pre-release build.  The usual warnings about possible bugs
-    apply.** The latest stable version is coverage.py 6.2, `described here`_.
-
+    apply.** The latest stable version is coverage.py 6.5.0, `described here`_.
 
 .. _described here: http://coverage.readthedocs.io/
+
 
 For Enterprise
 --------------
@@ -55,20 +56,24 @@ Getting started is easy:
 
 #.  Install coverage.py::
 
-        $ pip install coverage
+        $ python3 -m pip install coverage
 
     For more details, see :ref:`install`.
 
 #.  Use ``coverage run`` to run your test suite and gather data. However you
-    normally run your test suite, you can run your test runner under coverage.
-    If your test runner command starts with "python", just replace the initial
-    "python" with "coverage run".
+    normally run your test suite, you can use your test runner under coverage.
 
-    Instructions for specific test runners:
+    .. tip::
+        If your test runner command starts with "python", just replace the initial
+        "python" with "coverage run".
 
-    .. tabs::
+        ``python something.py`` becomes ``coverage run something.py``
 
-        .. tab:: pytest
+        ``python -m amodule`` becomes ``coverage run -m amodule``
+
+    Other instructions for specific test runners:
+
+    - **pytest**
 
             If you usually use::
 
@@ -81,7 +86,7 @@ Getting started is easy:
             Many people choose to use the `pytest-cov`_ plugin, but for most
             purposes, it is unnecessary.
 
-        .. tab:: unittest
+    - **unittest**
 
             Change "python" to "coverage run", so this::
 
@@ -91,18 +96,18 @@ Getting started is easy:
 
                 $ coverage run -m unittest discover
 
-        .. tab:: nosetest
-
-            *Nose has been unmaintained for a long time. You should seriously
-            consider adopting a different test runner.*
-
-            Change this::
-
-                $ nosetests arg1 arg2
-
-            to::
-
-                $ coverage run -m nose arg1 arg2
+    .. - **nosetest**
+    ..
+    ..        *Nose has been unmaintained for a long time. You should seriously
+    ..        consider adopting a different test runner.*
+    ..
+    ..        Change this::
+    ..
+    ..            $ nosetests arg1 arg2
+    ..
+    ..        to this::
+    ..
+    ..            $ coverage run -m nose arg1 arg2
 
     To limit coverage measurement to code in the current directory, and also
     find files that weren't executed at all, add the ``--source=.`` argument to
@@ -150,7 +155,8 @@ Coverage.py can do a number of things:
 - It can tell you :ref:`what tests ran which lines <dynamic_contexts>`.
 
 - It can produce reports in a number of formats: :ref:`text <cmd_report>`,
-  :ref:`HTML <cmd_html>`, :ref:`XML <cmd_xml>`, and :ref:`JSON <cmd_json>`.
+  :ref:`HTML <cmd_html>`, :ref:`XML <cmd_xml>`, :ref:`LCOV <cmd_lcov>`,
+  and :ref:`JSON <cmd_json>`.
 
 - For advanced uses, there's an :ref:`API <api>`, and the result data is
   available in a :ref:`SQLite database <dbschema>`.
@@ -182,9 +188,10 @@ Getting help
 ------------
 
 If the :ref:`FAQ <faq>` doesn't answer your question, you can discuss
-coverage.py or get help using it on the `Testing In Python`_ mailing list.
+coverage.py or get help using it on the `Python discussion forums`_.  If you
+ping me (``@nedbat``), there's a higher chance I'll see the post.
 
-.. _Testing In Python: http://lists.idyll.org/listinfo/testing-in-python
+.. _Python discussion forums: https://discuss.python.org/
 
 Bug reports are gladly accepted at the `GitHub issue tracker`_.
 GitHub also hosts the `code repository`_.
@@ -200,7 +207,10 @@ using coverage.py.
 
 .. _I can be reached: https://nedbatchelder.com/site/aboutned.html
 
+.. raw:: html
 
+    <p>For news and other chatter, follow the project on Mastodon:
+    <a rel="me" href="https://hachyderm.io/@coveragepy">@coveragepy@hachyderm.io</a>.</p>
 
 More information
 ----------------
@@ -224,4 +234,5 @@ More information
     trouble
     faq
     Change history <changes>
+    migrating
     sleepy

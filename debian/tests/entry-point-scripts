@@ -15,9 +15,17 @@ set -o nounset
 
 COMMAND_TEMPLATE='%s-coverage'
 
+program_dir="$(dirname "$(realpath --strip "$0")")"
+
+# Use a working directory away from the source package root,
+# so that Python imports will not find the local source package.
+working_dir="$program_dir"
+cd "$working_dir"
+
 interpreter_names=(
         'python3'
-)
+        $(py3versions --supported)
+        )
 
 test_input_path="$(mktemp -t --suffix=".py")"
 cat > "$test_input_path" <<_EOF_
@@ -32,12 +40,11 @@ for interpreter_name in "${interpreter_names[@]}" ; do
 done
 
 
-# Copyright © 2016–2022 Ben Finney <bignose@debian.org>
+# Copyright © 2016–2023 Ben Finney <bignose@debian.org>
 # This is free software: you may copy, modify, and/or distribute this work
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; version 3 of that license or any later version.
 # No warranty expressed or implied.
-
 
 # Local variables:
 # coding: utf-8

@@ -13,7 +13,7 @@ Build-Depends:
     python3-all-dev,
     python3,
     debhelper-compat (= 13)
-Standards-Version: 4.6.0
+Standards-Version: 4.6.2
 Homepage: https://coverage.readthedocs.io/
 VCS-Git: https://salsa.debian.org/debian/pkg-python-coverage.git
 VCS-Browser: https://salsa.debian.org/debian/pkg-python-coverage/

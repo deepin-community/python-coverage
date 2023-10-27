@@ -1,6 +1,10 @@
 .. Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
 .. For details: https://github.com/nedbat/coveragepy/blob/master/NOTICE.txt
 
+.. This file is meant to be processed with cog to insert the latest database
+   schema into the docs. If it's out of date, the quality checks will fail.
+   Running "make prebuild" will bring it up to date.
+
 .. _dbschema:
 
 ===========================
@@ -15,8 +19,9 @@ be preferred to accessing the database directly.  Only advanced uses will need
 to use the database.
 
 The schema can change without changing the major version of coverage.py, so be
-careful when accessing the database directly.  The `coverage_schema` table has
-the schema number of the database.  The schema described here corresponds to:
+careful when accessing the database directly.  The ``coverage_schema`` table
+has the schema number of the database.  The schema described here corresponds
+to:
 
 .. [[[cog
     from coverage.sqldata import SCHEMA_VERSION
@@ -45,11 +50,11 @@ This is the database schema:
 .. [[[cog
     import textwrap
     from coverage.sqldata import SCHEMA
-    print(".. code::")
+    print(".. code-block:: sql")
     print()
     print(textwrap.indent(SCHEMA, "    "))
 .. ]]]
-.. code::
+.. code-block:: sql
 
     CREATE TABLE coverage_schema (
         -- One row, to record the version of the schema in this db.
@@ -61,7 +66,7 @@ This is the database schema:
         key text,
         value text,
         unique (key)
-        -- Keys:
+        -- Possible keys:
         --  'has_arcs' boolean      -- Is this data recording branches?
         --  'sys_argv' text         -- The coverage command line that recorded the data.
         --  'version' text          -- The version of coverage.py that made the file.
@@ -111,7 +116,7 @@ This is the database schema:
         foreign key (file_id) references file (id)
     );
 
-.. [[[end]]] (checksum: 207fbab355481686e0dce0a9d99d173c)
+.. [[[end]]] (checksum: 6a04d14b07f08f86cccf43056328dcb7)
 
 
 .. _numbits:

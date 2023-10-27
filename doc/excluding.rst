@@ -7,6 +7,8 @@
 Excluding code from coverage.py
 ===============================
 
+.. highlight:: python
+
 You may have code in your project that you know won't be executed, and you want
 to tell coverage.py to ignore it.  For example, you may have debugging-only
 code that won't be executed during your unit tests. You can tell coverage.py to
@@ -71,19 +73,20 @@ If the matched line introduces a block, the entire block is excluded from
 reporting.  Matching a ``def`` line or decorator line will exclude an entire
 function.
 
+.. highlight:: ini
+
 For example, you might decide that __repr__ functions are usually only used in
 debugging code, and are uninteresting to test themselves.  You could exclude
 all of them by adding a regex to the exclusion list::
 
     [report]
-    exclude_lines =
+    exclude_also =
         def __repr__
 
 For example, here's a list of exclusions I've used::
 
     [report]
-    exclude_lines =
-        pragma: no cover
+    exclude_also =
         def __repr__
         if self.debug:
         if settings.DEBUG
@@ -91,12 +94,14 @@ For example, here's a list of exclusions I've used::
         raise NotImplementedError
         if 0:
         if __name__ == .__main__.:
+        if TYPE_CHECKING:
         class .*\bProtocol\):
         @(abc\.)?abstractmethod
 
-Note that when using the ``exclude_lines`` option in a configuration file, you
-are taking control of the entire list of regexes, so you need to re-specify the
-default "pragma: no cover" match if you still want it to apply.
+The :ref:`config_report_exclude_also` option adds regexes to the built-in
+default list so that you can add your own exclusions.  The older
+:ref:`config_report_exclude_lines` option completely overwrites the list of
+regexes.
 
 The regexes only have to match part of a line. Be careful not to over-match.  A
 value of ``...`` will match any line with more than three characters in it.

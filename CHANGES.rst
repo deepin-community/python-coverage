@@ -9,15 +9,725 @@ These changes are listed in decreasing version number order. Note this can be
 different from a strict chronological order when there are two branches in
 development at the same time, such as 4.5.x and 5.0.
 
-This list is detailed and covers changes in each pre-release version.
-
     .. When updating the "Unreleased" header to a specific version, use this
     .. format.  Don't forget the jump target:
     ..
-    ..  .. _changes_981:
+    ..  .. _changes_9-8-1:
     ..
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
+
+.. scriv-start-here
+
+.. _changes_7-2-7:
+
+Version 7.2.7 — 2023-05-29
+--------------------------
+
+- Fix: reverted a `change from 6.4.3 <pull 1347_>`_ that helped Cython, but
+  also increased the size of data files when using dynamic contexts, as
+  described in the now-fixed `issue 1586`_. The problem is now avoided due to a
+  recent change (`issue 1538`_).  Thanks to `Anders Kaseorg <pull 1629_>`_
+  and David Szotten for persisting with problem reports and detailed diagnoses.
+
+- Wheels are now provided for CPython 3.12.
+
+.. _issue 1586: https://github.com/nedbat/coveragepy/issues/1586
+.. _pull 1629: https://github.com/nedbat/coveragepy/pull/1629
+
+
+.. _changes_7-2-6:
+
+Version 7.2.6 — 2023-05-23
+--------------------------
+
+- Fix: the ``lcov`` command could raise an IndexError exception if a file is
+  translated to Python but then executed under its own name.  Jinja2 does this
+  when rendering templates.  Fixes `issue 1553`_.
+
+- Python 3.12 beta 1 now inlines comprehensions.  Previously they were compiled
+  as invisible functions and coverage.py would warn you if they weren't
+  completely executed.  This no longer happens under Python 3.12.
+
+- Fix: the ``coverage debug sys`` command includes some environment variables
+  in its output.  This could have included sensitive data.  Those values are
+  now hidden with asterisks, closing `issue 1628`_.
+
+.. _issue 1553: https://github.com/nedbat/coveragepy/issues/1553
+.. _issue 1628: https://github.com/nedbat/coveragepy/issues/1628
+
+
+.. _changes_7-2-5:
+
+Version 7.2.5 — 2023-04-30
+--------------------------
+
+- Fix: ``html_report()`` could fail with an AttributeError on ``isatty`` if run
+  in an unusual environment where sys.stdout had been replaced.  This is now
+  fixed.
+
+
+.. _changes_7-2-4:
+
+Version 7.2.4 — 2023-04-28
+--------------------------
+
+PyCon 2023 sprint fixes!
+
+- Fix: with ``relative_files = true``, specifying a specific file to include or
+  omit wouldn't work correctly (`issue 1604`_).  This is now fixed, with
+  testing help by `Marc Gibbons <pull 1608_>`_.
+
+- Fix: the XML report would have an incorrect ``<source>`` element when using
+  relative files and the source option ended with a slash (`issue 1541`_).
+  This is now fixed, thanks to `Kevin Brown-Silva <pull 1608_>`_.
+
+- When the HTML report location is printed to the terminal, it's now a
+  terminal-compatible URL, so that you can click the location to open the HTML
+  file in your browser.  Finishes `issue 1523`_ thanks to `Ricardo Newbery
+  <pull 1613_>`_.
+
+- Docs: a new :ref:`Migrating page <migrating>` with details about how to
+  migrate between major versions of coverage.py.  It currently covers the
+  wildcard changes in 7.x.  Thanks, `Brian Grohe <pull 1610_>`_.
+
+.. _issue 1523: https://github.com/nedbat/coveragepy/issues/1523
+.. _issue 1541: https://github.com/nedbat/coveragepy/issues/1541
+.. _issue 1604: https://github.com/nedbat/coveragepy/issues/1604
+.. _pull 1608: https://github.com/nedbat/coveragepy/pull/1608
+.. _pull 1609: https://github.com/nedbat/coveragepy/pull/1609
+.. _pull 1610: https://github.com/nedbat/coveragepy/pull/1610
+.. _pull 1613: https://github.com/nedbat/coveragepy/pull/1613
+
+
+.. _changes_7-2-3:
+
+Version 7.2.3 — 2023-04-06
+--------------------------
+
+- Fix: the :ref:`config_run_sigterm` setting was meant to capture data if a
+  process was terminated with a SIGTERM signal, but it didn't always.  This was
+  fixed thanks to `Lewis Gaul <pull 1600_>`_, closing `issue 1599`_.
+
+- Performance: HTML reports with context information are now much more compact.
+  File sizes are typically as small as one-third the previous size, but can be
+  dramatically smaller. This closes `issue 1584`_ thanks to `Oleh Krehel
+  <pull 1587_>`_.
+
+- Development dependencies no longer use hashed pins, closing `issue 1592`_.
+
+.. _issue 1584: https://github.com/nedbat/coveragepy/issues/1584
+.. _pull 1587: https://github.com/nedbat/coveragepy/pull/1587
+.. _issue 1592: https://github.com/nedbat/coveragepy/issues/1592
+.. _issue 1599: https://github.com/nedbat/coveragepy/issues/1599
+.. _pull 1600: https://github.com/nedbat/coveragepy/pull/1600
+
+
+.. _changes_7-2-2:
+
+Version 7.2.2 — 2023-03-16
+--------------------------
+
+- Fix: if a virtualenv was created inside a source directory, and a sourced
+  package was installed inside the virtualenv, then all of the third-party
+  packages inside the virtualenv would be measured.  This was incorrect, but
+  has now been fixed: only the specified packages will be measured, thanks to
+  `Manuel Jacob <pull 1560_>`_.
+
+- Fix: the ``coverage lcov`` command could create a .lcov file with incorrect
+  LF (lines found) and LH (lines hit) totals.  This is now fixed, thanks to
+  `Ian Moore <pull 1583_>`_.
+
+- Fix: the ``coverage xml`` command on Windows could create a .xml file with
+  duplicate ``<package>`` elements. This is now fixed, thanks to `Benjamin
+  Parzella <pull 1574_>`_, closing `issue 1573`_.
+
+.. _pull 1560: https://github.com/nedbat/coveragepy/pull/1560
+.. _issue 1573: https://github.com/nedbat/coveragepy/issues/1573
+.. _pull 1574: https://github.com/nedbat/coveragepy/pull/1574
+.. _pull 1583: https://github.com/nedbat/coveragepy/pull/1583
+
+
+.. _changes_7-2-1:
+
+Version 7.2.1 — 2023-02-26
+--------------------------
+
+- Fix: the PyPI page had broken links to documentation pages, but no longer
+  does, closing `issue 1566`_.
+
+- Fix: public members of the coverage module are now properly indicated so that
+  mypy will find them, fixing `issue 1564`_.
+
+.. _issue 1564: https://github.com/nedbat/coveragepy/issues/1564
+.. _issue 1566: https://github.com/nedbat/coveragepy/issues/1566
+
+
+.. _changes_7-2-0:
+
+Version 7.2.0 — 2023-02-22
+--------------------------
+
+- Added a new setting ``[report] exclude_also`` to let you add more exclusions
+  without overwriting the defaults.  Thanks, `Alpha Chen <pull 1557_>`_,
+  closing `issue 1391`_.
+
+- Added a :meth:`.CoverageData.purge_files` method to remove recorded data for
+  a particular file.  Contributed by `Stephan Deibel <pull 1547_>`_.
+
+- Fix: when reporting commands fail, they will no longer congratulate
+  themselves with messages like "Wrote XML report to file.xml" before spewing a
+  traceback about their failure.
+
+- Fix: arguments in the public API that name file paths now accept pathlib.Path
+  objects.  This includes the ``data_file`` and ``config_file`` arguments to
+  the Coverage constructor and the ``basename`` argument to CoverageData.
+  Closes `issue 1552`_.
+
+- Fix: In some embedded environments, an IndexError could occur on stop() when
+  the originating thread exits before completion.  This is now fixed, thanks to
+  `Russell Keith-Magee <pull 1543_>`_, closing `issue 1542`_.
+
+- Added a ``py.typed`` file to announce our type-hintedness.  Thanks,
+  `KotlinIsland <pull 1550_>`_.
+
+.. _issue 1391: https://github.com/nedbat/coveragepy/issues/1391
+.. _issue 1542: https://github.com/nedbat/coveragepy/issues/1542
+.. _pull 1543: https://github.com/nedbat/coveragepy/pull/1543
+.. _pull 1547: https://github.com/nedbat/coveragepy/pull/1547
+.. _pull 1550: https://github.com/nedbat/coveragepy/pull/1550
+.. _issue 1552: https://github.com/nedbat/coveragepy/issues/1552
+.. _pull 1557: https://github.com/nedbat/coveragepy/pull/1557
+
+
+.. _changes_7-1-0:
+
+Version 7.1.0 — 2023-01-24
+--------------------------
+
+- Added: the debug output file can now be specified with ``[run] debug_file``
+  in the configuration file.  Closes `issue 1319`_.
+
+- Performance: fixed a slowdown with dynamic contexts that's been around since
+  6.4.3.  The fix closes `issue 1538`_.  Thankfully this doesn't break the
+  `Cython change`_ that fixed `issue 972`_.  Thanks to Mathieu Kniewallner for
+  the deep investigative work and comprehensive issue report.
+
+- Typing: all product and test code has type annotations.
+
+.. _Cython change: https://github.com/nedbat/coveragepy/pull/1347
+.. _issue 972: https://github.com/nedbat/coveragepy/issues/972
+.. _issue 1319: https://github.com/nedbat/coveragepy/issues/1319
+.. _issue 1538: https://github.com/nedbat/coveragepy/issues/1538
+
+
+.. _changes_7-0-5:
+
+Version 7.0.5 — 2023-01-10
+--------------------------
+
+- Fix: On Python 3.7, a file with type annotations but no ``from __future__
+  import annotations`` would be missing statements in the coverage report. This
+  is now fixed, closing `issue 1524`_.
+
+.. _issue 1524: https://github.com/nedbat/coveragepy/issues/1524
+
+
+.. _changes_7-0-4:
+
+Version 7.0.4 — 2023-01-07
+--------------------------
+
+- Performance: an internal cache of file names was accidentally disabled,
+  resulting in sometimes drastic reductions in performance.  This is now fixed,
+  closing `issue 1527`_.   Thanks to Ivan Ciuvalschii for the reproducible test
+  case.
+
+.. _issue 1527: https://github.com/nedbat/coveragepy/issues/1527
+
+
+.. _changes_7-0-3:
+
+Version 7.0.3 — 2023-01-03
+--------------------------
+
+- Fix: when using pytest-cov or pytest-xdist, or perhaps both, the combining
+  step could fail with ``assert row is not None`` using 7.0.2.  This was due to
+  a race condition that has always been possible and is still possible. In
+  7.0.1 and before, the error was silently swallowed by the combining code.
+  Now it will produce a message "Couldn't combine data file" and ignore the
+  data file as it used to do before 7.0.2.  Closes `issue 1522`_.
+
+.. _issue 1522: https://github.com/nedbat/coveragepy/issues/1522
+
+
+.. _changes_7-0-2:
+
+Version 7.0.2 — 2023-01-02
+--------------------------
+
+- Fix: when using the ``[run] relative_files = True`` setting, a relative
+  ``[paths]`` pattern was still being made absolute.  This is now fixed,
+  closing `issue 1519`_.
+
+- Fix: if Python doesn't provide tomllib, then TOML configuration files can
+  only be read if coverage.py is installed with the ``[toml]`` extra.
+  Coverage.py will raise an error if TOML support is not installed when it sees
+  your settings are in a .toml file. But it didn't understand that
+  ``[tools.coverage]`` was a valid section header, so the error wasn't reported
+  if you used that header, and settings were silently ignored.  This is now
+  fixed, closing `issue 1516`_.
+
+- Fix: adjusted how decorators are traced on PyPy 7.3.10, fixing `issue 1515`_.
+
+- Fix: the ``coverage lcov`` report did not properly implement the
+  ``--fail-under=MIN`` option.  This has been fixed.
+
+- Refactor: added many type annotations, including a number of refactorings.
+  This should not affect outward behavior, but they were a bit invasive in some
+  places, so keep your eyes peeled for oddities.
+
+- Refactor: removed the vestigial and long untested support for Jython and
+  IronPython.
+
+.. _issue 1515: https://github.com/nedbat/coveragepy/issues/1515
+.. _issue 1516: https://github.com/nedbat/coveragepy/issues/1516
+.. _issue 1519: https://github.com/nedbat/coveragepy/issues/1519
+
+
+.. _changes_7-0-1:
+
+Version 7.0.1 — 2022-12-23
+--------------------------
+
+- When checking if a file mapping resolved to a file that exists, we weren't
+  considering files in .whl files.  This is now fixed, closing `issue 1511`_.
+
+- File pattern rules were too strict, forbidding plus signs and curly braces in
+  directory and file names.  This is now fixed, closing `issue 1513`_.
+
+- Unusual Unicode or control characters in source files could prevent
+  reporting.  This is now fixed, closing `issue 1512`_.
+
+- The PyPy wheel now installs on PyPy 3.7, 3.8, and 3.9, closing `issue 1510`_.
+
+.. _issue 1510: https://github.com/nedbat/coveragepy/issues/1510
+.. _issue 1511: https://github.com/nedbat/coveragepy/issues/1511
+.. _issue 1512: https://github.com/nedbat/coveragepy/issues/1512
+.. _issue 1513: https://github.com/nedbat/coveragepy/issues/1513
+
+
+.. _changes_7-0-0:
+
+Version 7.0.0 — 2022-12-18
+--------------------------
+
+Nothing new beyond 7.0.0b1.
+
+
+.. _changes_7-0-0b1:
+
+Version 7.0.0b1 — 2022-12-03
+----------------------------
+
+A number of changes have been made to file path handling, including pattern
+matching and path remapping with the ``[paths]`` setting (see
+:ref:`config_paths`).  These changes might affect you, and require you to
+update your settings.
+
+(This release includes the changes from `6.6.0b1 <changes_6-6-0b1_>`_, since
+6.6.0 was never released.)
+
+- Changes to file pattern matching, which might require updating your
+  configuration:
+
+  - Previously, ``*`` would incorrectly match directory separators, making
+    precise matching difficult.  This is now fixed, closing `issue 1407`_.
+
+  - Now ``**`` matches any number of nested directories, including none.
+
+- Improvements to combining data files when using the
+  :ref:`config_run_relative_files` setting, which might require updating your
+  configuration:
+
+  - During ``coverage combine``, relative file paths are implicitly combined
+    without needing a ``[paths]`` configuration setting.  This also fixed
+    `issue 991`_.
+
+  - A ``[paths]`` setting like ``*/foo`` will now match ``foo/bar.py`` so that
+    relative file paths can be combined more easily.
+
+  - The :ref:`config_run_relative_files` setting is properly interpreted in
+    more places, fixing `issue 1280`_.
+
+- When remapping file paths with ``[paths]``, a path will be remapped only if
+  the resulting path exists.  The documentation has long said the prefix had to
+  exist, but it was never enforced.  This fixes `issue 608`_, improves `issue
+  649`_, and closes `issue 757`_.
+
+- Reporting operations now implicitly use the ``[paths]`` setting to remap file
+  paths within a single data file.  Combining multiple files still requires the
+  ``coverage combine`` step, but this simplifies some single-file situations.
+  Closes `issue 1212`_ and `issue 713`_.
+
+- The ``coverage report`` command now has a ``--format=`` option.  The original
+  style is now ``--format=text``, and is the default.
+
+  - Using ``--format=markdown`` will write the table in Markdown format, thanks
+    to `Steve Oswald <pull 1479_>`_, closing `issue 1418`_.
+
+  - Using ``--format=total`` will write a single total number to the
+    output.  This can be useful for making badges or writing status updates.
+
+- Combining data files with ``coverage combine`` now hashes the data files to
+  skip files that add no new information.  This can reduce the time needed.
+  Many details affect the speed-up, but for coverage.py's own test suite,
+  combining is about 40% faster. Closes `issue 1483`_.
+
+- When searching for completely un-executed files, coverage.py uses the
+  presence of ``__init__.py`` files to determine which directories have source
+  that could have been imported.  However, `implicit namespace packages`_ don't
+  require ``__init__.py``.  A new setting ``[report]
+  include_namespace_packages`` tells coverage.py to consider these directories
+  during reporting.  Thanks to `Felix Horvat <pull 1387_>`_ for the
+  contribution.  Closes `issue 1383`_ and `issue 1024`_.
+
+- Fixed environment variable expansion in pyproject.toml files.  It was overly
+  broad, causing errors outside of coverage.py settings, as described in `issue
+  1481`_ and `issue 1345`_.  This is now fixed, but in rare cases will require
+  changing your pyproject.toml to quote non-string values that use environment
+  substitution.
+
+- An empty file has a coverage total of 100%, but used to fail with
+  ``--fail-under``.  This has been fixed, closing `issue 1470`_.
+
+- The text report table no longer writes out two separator lines if there are
+  no files listed in the table.  One is plenty.
+
+- Fixed a mis-measurement of a strange use of wildcard alternatives in
+  match/case statements, closing `issue 1421`_.
+
+- Fixed internal logic that prevented coverage.py from running on
+  implementations other than CPython or PyPy (`issue 1474`_).
+
+- The deprecated ``[run] note`` setting has been completely removed.
+
+.. _implicit namespace packages: https://peps.python.org/pep-0420/
+.. _issue 608: https://github.com/nedbat/coveragepy/issues/608
+.. _issue 649: https://github.com/nedbat/coveragepy/issues/649
+.. _issue 713: https://github.com/nedbat/coveragepy/issues/713
+.. _issue 757: https://github.com/nedbat/coveragepy/issues/757
+.. _issue 991: https://github.com/nedbat/coveragepy/issues/991
+.. _issue 1024: https://github.com/nedbat/coveragepy/issues/1024
+.. _issue 1212: https://github.com/nedbat/coveragepy/issues/1212
+.. _issue 1280: https://github.com/nedbat/coveragepy/issues/1280
+.. _issue 1345: https://github.com/nedbat/coveragepy/issues/1345
+.. _issue 1383: https://github.com/nedbat/coveragepy/issues/1383
+.. _issue 1407: https://github.com/nedbat/coveragepy/issues/1407
+.. _issue 1418: https://github.com/nedbat/coveragepy/issues/1418
+.. _issue 1421: https://github.com/nedbat/coveragepy/issues/1421
+.. _issue 1470: https://github.com/nedbat/coveragepy/issues/1470
+.. _issue 1474: https://github.com/nedbat/coveragepy/issues/1474
+.. _issue 1481: https://github.com/nedbat/coveragepy/issues/1481
+.. _issue 1483: https://github.com/nedbat/coveragepy/issues/1483
+.. _pull 1387: https://github.com/nedbat/coveragepy/pull/1387
+.. _pull 1479: https://github.com/nedbat/coveragepy/pull/1479
+
+
+.. _changes_6-6-0b1:
+
+Version 6.6.0b1 — 2022-10-31
+----------------------------
+
+(Note: 6.6.0 final was never released. These changes are part of `7.0.0b1
+<changes_7-0-0b1_>`_.)
+
+- Changes to file pattern matching, which might require updating your
+  configuration:
+
+  - Previously, ``*`` would incorrectly match directory separators, making
+    precise matching difficult.  This is now fixed, closing `issue 1407`_.
+
+  - Now ``**`` matches any number of nested directories, including none.
+
+- Improvements to combining data files when using the
+  :ref:`config_run_relative_files` setting:
+
+  - During ``coverage combine``, relative file paths are implicitly combined
+    without needing a ``[paths]`` configuration setting.  This also fixed
+    `issue 991`_.
+
+  - A ``[paths]`` setting like ``*/foo`` will now match ``foo/bar.py`` so that
+    relative file paths can be combined more easily.
+
+  - The setting is properly interpreted in more places, fixing `issue 1280`_.
+
+- Fixed environment variable expansion in pyproject.toml files.  It was overly
+  broad, causing errors outside of coverage.py settings, as described in `issue
+  1481`_ and `issue 1345`_.  This is now fixed, but in rare cases will require
+  changing your pyproject.toml to quote non-string values that use environment
+  substitution.
+
+- Fixed internal logic that prevented coverage.py from running on
+  implementations other than CPython or PyPy (`issue 1474`_).
+
+.. _issue 991: https://github.com/nedbat/coveragepy/issues/991
+.. _issue 1280: https://github.com/nedbat/coveragepy/issues/1280
+.. _issue 1345: https://github.com/nedbat/coveragepy/issues/1345
+.. _issue 1407: https://github.com/nedbat/coveragepy/issues/1407
+.. _issue 1474: https://github.com/nedbat/coveragepy/issues/1474
+.. _issue 1481: https://github.com/nedbat/coveragepy/issues/1481
+
+
+.. _changes_6-5-0:
+
+Version 6.5.0 — 2022-09-29
+--------------------------
+
+- The JSON report now includes details of which branches were taken, and which
+  are missing for each file. Thanks, `Christoph Blessing <pull 1438_>`_. Closes
+  `issue 1425`_.
+
+- Starting with coverage.py 6.2, ``class`` statements were marked as a branch.
+  This wasn't right, and has been reverted, fixing `issue 1449`_. Note this
+  will very slightly reduce your coverage total if you are measuring branch
+  coverage.
+
+- Packaging is now compliant with `PEP 517`_, closing `issue 1395`_.
+
+- A new debug option ``--debug=pathmap`` shows details of the remapping of
+  paths that happens during combine due to the ``[paths]`` setting.
+
+- Fix an internal problem with caching of invalid Python parsing. Found by
+  OSS-Fuzz, fixing their `bug 50381`_.
+
+.. _bug 50381: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=50381
+.. _PEP 517: https://peps.python.org/pep-0517/
+.. _issue 1395: https://github.com/nedbat/coveragepy/issues/1395
+.. _issue 1425: https://github.com/nedbat/coveragepy/issues/1425
+.. _issue 1449: https://github.com/nedbat/coveragepy/issues/1449
+.. _pull 1438: https://github.com/nedbat/coveragepy/pull/1438
+
+
+.. _changes_6-4-4:
+
+Version 6.4.4 — 2022-08-16
+--------------------------
+
+- Wheels are now provided for Python 3.11.
+
+
+.. _changes_6-4-3:
+
+Version 6.4.3 — 2022-08-06
+--------------------------
+
+- Fix a failure when combining data files if the file names contained glob-like
+  patterns.  Thanks, `Michael Krebs and Benjamin Schubert <pull 1405_>`_.
+
+- Fix a messaging failure when combining Windows data files on a different
+  drive than the current directory, closing `issue 1428`_.  Thanks, `Lorenzo
+  Micò <pull 1430_>`_.
+
+- Fix path calculations when running in the root directory, as you might do in
+  a Docker container. Thanks `Arthur Rio <pull 1403_>`_.
+
+- Filtering in the HTML report wouldn't work when reloading the index page.
+  This is now fixed.  Thanks, `Marc Legendre <pull 1413_>`_.
+
+- Fix a problem with Cython code measurement, closing `issue 972`_.  Thanks,
+  `Matus Valo <pull 1347_>`_.
+
+.. _issue 972: https://github.com/nedbat/coveragepy/issues/972
+.. _issue 1428: https://github.com/nedbat/coveragepy/issues/1428
+.. _pull 1347: https://github.com/nedbat/coveragepy/pull/1347
+.. _pull 1403: https://github.com/nedbat/coveragepy/issues/1403
+.. _pull 1405: https://github.com/nedbat/coveragepy/issues/1405
+.. _pull 1413: https://github.com/nedbat/coveragepy/issues/1413
+.. _pull 1430: https://github.com/nedbat/coveragepy/pull/1430
+
+
+.. _changes_6-4-2:
+
+Version 6.4.2 — 2022-07-12
+--------------------------
+
+- Updated for a small change in Python 3.11.0 beta 4: modules now start with a
+  line with line number 0, which is ignored.  This line cannot be executed, so
+  coverage totals were thrown off.  This line is now ignored by coverage.py,
+  but this also means that truly empty modules (like ``__init__.py``) have no
+  lines in them, rather than one phantom line.  Fixes `issue 1419`_.
+
+- Internal debugging data added to sys.modules is now an actual module, to
+  avoid confusing code that examines everything in sys.modules.  Thanks,
+  `Yilei Yang <pull 1399_>`_.
+
+.. _issue 1419: https://github.com/nedbat/coveragepy/issues/1419
+.. _pull 1399: https://github.com/nedbat/coveragepy/pull/1399
+
+
+.. _changes_6-4-1:
+
+Version 6.4.1 — 2022-06-02
+--------------------------
+
+- Greatly improved performance on PyPy, and other environments that need the
+  pure Python trace function.  Thanks, Carl Friedrich Bolz-Tereick (`pull
+  1381`_ and `pull 1388`_).  Slightly improved performance when using the C
+  trace function, as most environments do.  Closes `issue 1339`_.
+
+- The conditions for using tomllib from the standard library have been made
+  more precise, so that 3.11 alphas will continue to work. Closes `issue
+  1390`_.
+
+.. _issue 1339: https://github.com/nedbat/coveragepy/issues/1339
+.. _pull 1381: https://github.com/nedbat/coveragepy/pull/1381
+.. _pull 1388: https://github.com/nedbat/coveragepy/pull/1388
+.. _issue 1390: https://github.com/nedbat/coveragepy/issues/1390
+
+
+.. _changes_64:
+
+Version 6.4 — 2022-05-22
+------------------------
+
+- A new setting, :ref:`config_run_sigterm`, controls whether a SIGTERM signal
+  handler is used.  In 6.3, the signal handler was always installed, to capture
+  data at unusual process ends.  Unfortunately, this introduced other problems
+  (see `issue 1310`_).  Now the signal handler is only used if you opt-in by
+  setting ``[run] sigterm = true``.
+
+- Small changes to the HTML report:
+
+  - Added links to next and previous file, and more keyboard shortcuts: ``[``
+    and ``]`` for next file and previous file; ``u`` for up to the index; and
+    ``?`` to open/close the help panel.  Thanks, `J. M. F. Tsang
+    <pull 1364_>`_.
+
+  - The time stamp and version are displayed at the top of the report.  Thanks,
+    `Ammar Askar <pull 1354_>`_. Closes `issue 1351`_.
+
+- A new debug option ``debug=sqldata`` adds more detail to ``debug=sql``,
+  logging all the data being written to the database.
+
+- Previously, running ``coverage report`` (or any of the reporting commands) in
+  an empty directory would create a .coverage data file.  Now they do not,
+  fixing `issue 1328`_.
+
+- On Python 3.11, the ``[toml]`` extra no longer installs tomli, instead using
+  tomllib from the standard library.  Thanks `Shantanu <pull 1359_>`_.
+
+- In-memory CoverageData objects now properly update(), closing `issue 1323`_.
+
+.. _issue 1310: https://github.com/nedbat/coveragepy/issues/1310
+.. _issue 1323: https://github.com/nedbat/coveragepy/issues/1323
+.. _issue 1328: https://github.com/nedbat/coveragepy/issues/1328
+.. _issue 1351: https://github.com/nedbat/coveragepy/issues/1351
+.. _pull 1354: https://github.com/nedbat/coveragepy/pull/1354
+.. _pull 1359: https://github.com/nedbat/coveragepy/pull/1359
+.. _pull 1364: https://github.com/nedbat/coveragepy/pull/1364
+
+
+.. _changes_633:
+
+Version 6.3.3 — 2022-05-12
+--------------------------
+
+- Fix: Coverage.py now builds successfully on CPython 3.11 (3.11.0b1) again.
+  Closes `issue 1367`_.  Some results for generators may have changed.
+
+.. _issue 1367: https://github.com/nedbat/coveragepy/issues/1367
+
+
+.. _changes_632:
+
+Version 6.3.2 — 2022-02-20
+--------------------------
+
+- Fix: adapt to pypy3.9's decorator tracing behavior.  It now traces function
+  decorators like CPython 3.8: both the @-line and the def-line are traced.
+  Fixes `issue 1326`_.
+
+- Debug: added ``pybehave`` to the list of :ref:`coverage debug <cmd_debug>`
+  and :ref:`cmd_run_debug` options.
+
+- Fix: show an intelligible error message if ``--concurrency=multiprocessing``
+  is used without a configuration file.  Closes `issue 1320`_.
+
+.. _issue 1320: https://github.com/nedbat/coveragepy/issues/1320
+.. _issue 1326: https://github.com/nedbat/coveragepy/issues/1326
+
+
+.. _changes_631:
+
+Version 6.3.1 — 2022-02-01
+--------------------------
+
+- Fix: deadlocks could occur when terminating processes.  Some of these
+  deadlocks (described in `issue 1310`_) are now fixed.
+
+- Fix: a signal handler was being set from multiple threads, causing an error:
+  "ValueError: signal only works in main thread".  This is now fixed, closing
+  `issue 1312`_.
+
+- Fix: ``--precision`` on the command-line was being ignored while considering
+  ``--fail-under``.  This is now fixed, thanks to
+  `Marcelo Trylesinski <pull 1317_>`_.
+
+- Fix: releases no longer provide 3.11.0-alpha wheels. Coverage.py uses CPython
+  internal fields which are moving during the alpha phase. Fixes `issue 1316`_.
+
+.. _issue 1310: https://github.com/nedbat/coveragepy/issues/1310
+.. _issue 1312: https://github.com/nedbat/coveragepy/issues/1312
+.. _issue 1316: https://github.com/nedbat/coveragepy/issues/1316
+.. _pull 1317: https://github.com/nedbat/coveragepy/pull/1317
+
+
+.. _changes_63:
+
+Version 6.3 — 2022-01-25
+------------------------
+
+- Feature: Added the ``lcov`` command to generate reports in LCOV format.
+  Thanks, `Bradley Burns <pull 1289_>`_. Closes issues `587 <issue 587_>`_
+  and `626 <issue 626_>`_.
+
+- Feature: the coverage data file can now be specified on the command line with
+  the ``--data-file`` option in any command that reads or writes data.  This is
+  in addition to the existing ``COVERAGE_FILE`` environment variable.  Closes
+  `issue 624`_. Thanks, `Nikita Bloshchanevich <pull 1304_>`_.
+
+- Feature: coverage measurement data will now be written when a SIGTERM signal
+  is received by the process.  This includes
+  :meth:`Process.terminate <python:multiprocessing.Process.terminate>`,
+  and other ways to terminate a process.  Currently this is only on Linux and
+  Mac; Windows is not supported.  Fixes `issue 1307`_.
+
+- Dropped support for Python 3.6, which reached end-of-life on 2021-12-23.
+
+- Updated Python 3.11 support to 3.11.0a4, fixing `issue 1294`_.
+
+- Fix: the coverage data file is now created in a more robust way, to avoid
+  problems when multiple processes are trying to write data at once. Fixes
+  issues `1303 <issue 1303_>`_ and `883 <issue 883_>`_.
+
+- Fix: a .gitignore file will only be written into the HTML report output
+  directory if the directory is empty.  This should prevent certain unfortunate
+  accidents of writing the file where it is not wanted.
+
+- Releases now have MacOS arm64 wheels for Apple Silicon, fixing `issue 1288`_.
+
+.. _issue 587: https://github.com/nedbat/coveragepy/issues/587
+.. _issue 624: https://github.com/nedbat/coveragepy/issues/624
+.. _issue 626: https://github.com/nedbat/coveragepy/issues/626
+.. _issue 883: https://github.com/nedbat/coveragepy/issues/883
+.. _issue 1288: https://github.com/nedbat/coveragepy/issues/1288
+.. _issue 1294: https://github.com/nedbat/coveragepy/issues/1294
+.. _issue 1303: https://github.com/nedbat/coveragepy/issues/1303
+.. _issue 1307: https://github.com/nedbat/coveragepy/issues/1307
+.. _pull 1289: https://github.com/nedbat/coveragepy/pull/1289
+.. _pull 1304: https://github.com/nedbat/coveragepy/pull/1304
+
 
 .. _changes_62:
 
@@ -48,16 +758,16 @@ Version 6.2 — 2021-11-26
   multiprocessing wouldn't suppress the data file suffix (`issue 989`_).  This
   is now fixed.
 
-- Debug: The `coverage debug data` command will now sniff out combinable data
+- Debug: The ``coverage debug data`` command will now sniff out combinable data
   files, and report on all of them.
 
-- Debug: The `coverage debug` command used to accept a number of topics at a
+- Debug: The ``coverage debug`` command used to accept a number of topics at a
   time, and show all of them, though this was never documented.  This no longer
   works, to allow for command-line options in the future.
 
 .. _issue 989: https://github.com/nedbat/coveragepy/issues/989
 .. _issue 1012: https://github.com/nedbat/coveragepy/issues/1012
-.. _issue 1082: https://github.com/nedbat/coveragepy/issues/1802
+.. _issue 1082: https://github.com/nedbat/coveragepy/issues/1082
 .. _issue 1203: https://github.com/nedbat/coveragepy/issues/1203
 
 
@@ -183,7 +893,7 @@ Version 6.0.2 — 2021-10-11
 
 - Packages named as "source packages" (with ``source``, or ``source_pkgs``, or
   pytest-cov's ``--cov``) might have been only partially measured.  Their
-  top-level statements could be marked as unexecuted, because they were
+  top-level statements could be marked as un-executed, because they were
   imported by coverage.py before measurement began (`issue 1232`_).  This is
   now fixed, but the package will be imported twice, once by coverage.py, then
   again by your test suite.  This could cause problems if importing the package
@@ -433,6 +1143,7 @@ Version 5.3.1 — 2020-12-19
 .. _issue 1010: https://github.com/nedbat/coveragepy/issues/1010
 .. _pull request 1066: https://github.com/nedbat/coveragepy/pull/1066
 
+
 .. _changes_53:
 
 Version 5.3 — 2020-09-13
@@ -452,7 +1163,7 @@ Version 5.3 — 2020-09-13
 .. _issue 1011: https://github.com/nedbat/coveragepy/issues/1011
 
 
-.. endchangesinclude
+.. scriv-end-here
 
 Older changes
 -------------

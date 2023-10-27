@@ -3,6 +3,8 @@
 
 """Base test case class for coverage.py testing."""
 
+from __future__ import annotations
+
 import contextlib
 import datetime
 import difflib
@@ -15,12 +17,18 @@ import re
 import shlex
 import sys
 
-import pytest
+from types import ModuleType
+from typing import (
+    Any, Collection, Dict, Iterable, Iterator, List, Mapping, Optional,
+    Sequence, Tuple, Union,
+)
 
 import coverage
-from coverage import env
+from coverage import Coverage
 from coverage.cmdline import CoverageScript
+from coverage.data import CoverageData
 from coverage.misc import import_local_file
+from coverage.types import TArc, TLineNo
 
 from tests.helpers import arcs_to_arcz_repr, arcz_to_arcs, assert_count_equal
 from tests.helpers import nice_file, run_command
@@ -32,6 +40,11 @@ OK, ERR = 0, 1
 
 # The coverage/tests directory, for all sorts of finding test helping things.
 TESTS_DIR = os.path.dirname(__file__)
+
+# Install arguments to pass to pip when reinstalling ourselves.
+# Defaults to the top of the source tree, but can be overridden if we need
+# some help on certain platforms.
+COVERAGE_INSTALL_ARGS = os.getenv("COVERAGE_INSTALL_ARGS", nice_file(TESTS_DIR, ".."))
 
 
 class CoverageTest(
@@ -51,15 +64,20 @@ class CoverageTest(
     # Let stderr go to stderr, pytest will capture it for us.
     show_stderr = True
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         # Attributes for getting info about what happened.
-        self.last_command_status = None
-        self.last_command_output = None
-        self.last_module_name = None
+        self.last_command_status: Optional[int] = None
+        self.last_command_output: Optional[str] = None
+        self.last_module_name: Optional[str] = None
 
-    def start_import_stop(self, cov, modname, modfile=None):
+    def start_import_stop(
+        self,
+        cov: Coverage,
+        modname: str,
+        modfile: Optional[str] = None
+    ) -> ModuleType:
         """Start coverage, import a file, then stop coverage.
 
         `cov` is started and stopped, with an `import_local_file` of
@@ -78,22 +96,28 @@ class CoverageTest(
             cov.stop()
         return mod
 
-    def get_report(self, cov, squeeze=True, **kwargs):
+    def get_report(self, cov: Coverage, squeeze: bool = True, **kwargs: Any) -> str:
         """Get the report from `cov`, and canonicalize it."""
         repout = io.StringIO()
         kwargs.setdefault("show_missing", False)
         cov.report(file=repout, **kwargs)
         report = repout.getvalue().replace('\\', '/')
+        print(report)   # When tests fail, it's helpful to see the output
         if squeeze:
             report = re.sub(r" +", " ", report)
         return report
 
-    def get_module_name(self):
+    def get_module_name(self) -> str:
         """Return a random module name to use for this test run."""
         self.last_module_name = 'coverage_test_' + str(random.random())[2:]
         return self.last_module_name
 
-    def _check_arcs(self, a1, a2, arc_type):
+    def _check_arcs(
+        self,
+        a1: Optional[Iterable[TArc]],
+        a2: Optional[Iterable[TArc]],
+        arc_type: str,
+    ) -> str:
         """Check that the arc lists `a1` and `a2` are equal.
 
         If they are equal, return empty string. If they are unequal, return
@@ -111,11 +135,20 @@ class CoverageTest(
             return ""
 
     def check_coverage(
-        self, text, lines=None, missing="", report="",
-        excludes=None, partials="",
-        arcz=None, arcz_missing=None, arcz_unpredicted=None,
-        arcs=None, arcs_missing=None, arcs_unpredicted=None,
-    ):
+        self,
+        text: str,
+        lines: Optional[Union[Sequence[TLineNo], Sequence[List[TLineNo]]]] = None,
+        missing: Union[str, Sequence[str]] = "",
+        report: str = "",
+        excludes: Optional[Iterable[str]] = None,
+        partials: Iterable[str] = (),
+        arcz: Optional[str] = None,
+        arcz_missing: Optional[str] = None,
+        arcz_unpredicted: Optional[str] = None,
+        arcs: Optional[Iterable[TArc]] = None,
+        arcs_missing: Optional[Iterable[TArc]] = None,
+        arcs_unpredicted: Optional[Iterable[TArc]] = None,
+    ) -> Coverage:
         """Check the coverage measurement of `text`.
 
         The source `text` is run and measured.  `lines` are the line numbers
@@ -169,7 +202,7 @@ class CoverageTest(
             if isinstance(lines[0], int):
                 # lines is just a list of numbers, it must match the statements
                 # found in the code.
-                assert statements == lines, f"{statements!r} != {lines!r}"
+                assert statements == lines, f"lines: {statements!r} != {lines!r}"
             else:
                 # lines is a list of possible line number lists, one of them
                 # must match.
@@ -181,7 +214,7 @@ class CoverageTest(
 
             missing_formatted = analysis.missing_formatted()
             if isinstance(missing, str):
-                msg = f"{missing_formatted!r} != {missing!r}"
+                msg = f"missing: {missing_formatted!r} != {missing!r}"
                 assert missing_formatted == missing, msg
             else:
                 for missing_list in missing:
@@ -213,18 +246,33 @@ class CoverageTest(
 
         return cov
 
-    def make_data_file(self, basename=None, suffix=None, lines=None, file_tracers=None):
+    def make_data_file(
+        self,
+        basename: Optional[str] = None,
+        suffix: Optional[str] = None,
+        lines: Optional[Mapping[str, Collection[TLineNo]]] = None,
+        arcs: Optional[Mapping[str, Collection[TArc]]] = None,
+        file_tracers: Optional[Mapping[str, str]] = None,
+    ) -> CoverageData:
         """Write some data into a coverage data file."""
         data = coverage.CoverageData(basename=basename, suffix=suffix)
+        assert lines is None or arcs is None
         if lines:
             data.add_lines(lines)
+        if arcs:
+            data.add_arcs(arcs)
         if file_tracers:
             data.add_file_tracers(file_tracers)
         data.write()
         return data
 
     @contextlib.contextmanager
-    def assert_warnings(self, cov, warnings, not_warnings=()):
+    def assert_warnings(
+        self,
+        cov: Coverage,
+        warnings: Iterable[str],
+        not_warnings: Iterable[str] = (),
+    ) -> Iterator[None]:
         """A context manager to check that particular warnings happened in `cov`.
 
         `cov` is a Coverage instance.  `warnings` is a list of regexes.  Every
@@ -242,7 +290,11 @@ class CoverageTest(
         """
         __tracebackhide__ = True
         saved_warnings = []
-        def capture_warning(msg, slug=None, once=False):        # pylint: disable=unused-argument
+        def capture_warning(
+            msg: str,
+            slug: Optional[str] = None,
+            once: bool = False,                 # pylint: disable=unused-argument
+        ) -> None:
             """A fake implementation of Coverage._warn, to capture warnings."""
             # NOTE: we don't implement `once`.
             if slug:
@@ -250,7 +302,7 @@ class CoverageTest(
             saved_warnings.append(msg)
 
         original_warn = cov._warn
-        cov._warn = capture_warning
+        cov._warn = capture_warning             # type: ignore[method-assign]
 
         try:
             yield
@@ -275,36 +327,41 @@ class CoverageTest(
                 if saved_warnings:
                     assert False, f"Unexpected warnings: {saved_warnings!r}"
         finally:
-            cov._warn = original_warn
+            cov._warn = original_warn           # type: ignore[method-assign]
 
-    def assert_same_files(self, flist1, flist2):
+    def assert_same_files(self, flist1: Iterable[str], flist2: Iterable[str]) -> None:
         """Assert that `flist1` and `flist2` are the same set of file names."""
         flist1_nice = [nice_file(f) for f in flist1]
         flist2_nice = [nice_file(f) for f in flist2]
         assert_count_equal(flist1_nice, flist2_nice)
 
-    def assert_exists(self, fname):
+    def assert_exists(self, fname: str) -> None:
         """Assert that `fname` is a file that exists."""
         assert os.path.exists(fname), f"File {fname!r} should exist"
 
-    def assert_doesnt_exist(self, fname):
+    def assert_doesnt_exist(self, fname: str) -> None:
         """Assert that `fname` is a file that doesn't exist."""
         assert not os.path.exists(fname), f"File {fname!r} shouldn't exist"
 
-    def assert_file_count(self, pattern, count):
+    def assert_file_count(self, pattern: str, count: int) -> None:
         """Assert that there are `count` files matching `pattern`."""
         files = sorted(glob.glob(pattern))
         msg = "There should be {} files matching {!r}, but there are these: {}"
         msg = msg.format(count, pattern, files)
         assert len(files) == count, msg
 
-    def assert_recent_datetime(self, dt, seconds=10, msg=None):
+    def assert_recent_datetime(
+        self,
+        dt: datetime.datetime,
+        seconds: int = 10,
+        msg: Optional[str] = None,
+    ) -> None:
         """Assert that `dt` marks a time at most `seconds` seconds ago."""
         age = datetime.datetime.now() - dt
         assert age.total_seconds() >= 0, msg
         assert age.total_seconds() <= seconds, msg
 
-    def command_line(self, args, ret=OK):
+    def command_line(self, args: str, ret: int = OK) -> None:
         """Run `args` through the command line.
 
         Use this when you want to run the full coverage machinery, but in the
@@ -325,7 +382,7 @@ class CoverageTest(
     # https://salsa.debian.org/debian/pkg-python-coverage/-/blob/master/debian/patches/02.rename-public-programs.patch
     coverage_command = "coverage"
 
-    def run_command(self, cmd):
+    def run_command(self, cmd: str) -> str:
         """Run the command-line `cmd` in a sub-process.
 
         `cmd` is the command line to invoke in a sub-process. Returns the
@@ -342,7 +399,7 @@ class CoverageTest(
         _, output = self.run_command_status(cmd)
         return output
 
-    def run_command_status(self, cmd):
+    def run_command_status(self, cmd: str) -> Tuple[int, str]:
         """Run the command-line `cmd` in a sub-process, and print its output.
 
         Use this when you need to test the process behavior of coverage.
@@ -377,18 +434,9 @@ class CoverageTest(
             command_words = [os.path.basename(sys.executable)]
 
         elif command_name == "coverage":
-            if env.JYTHON:                  # pragma: only jython
-                # Jython can't do reporting, so let's skip the test now.
-                if command_args and command_args[0] in ('report', 'html', 'xml', 'annotate'):
-                    pytest.skip("Can't run reporting commands in Jython")
-                # Jython can't run "coverage" as a command because the shebang
-                # refers to another shebang'd Python script. So run them as
-                # modules.
-                command_words = "jython -m coverage".split()
-            else:
-                # The invocation requests the coverage.py program.  Substitute the
-                # actual coverage.py main command name.
-                command_words = [self.coverage_command]
+            # The invocation requests the coverage.py program.  Substitute the
+            # actual coverage.py main command name.
+            command_words = [self.coverage_command]
 
         else:
             command_words = [command_name]
@@ -398,8 +446,6 @@ class CoverageTest(
         # Add our test modules directory to PYTHONPATH.  I'm sure there's too
         # much path munging here, but...
         pythonpath_name = "PYTHONPATH"
-        if env.JYTHON:
-            pythonpath_name = "JYTHONPATH"          # pragma: only jython
 
         testmods = nice_file(self.working_root(), "tests/modules")
         zipfile = nice_file(self.working_root(), "tests/zipmods.zip")
@@ -413,36 +459,36 @@ class CoverageTest(
         print(self.last_command_output)
         return self.last_command_status, self.last_command_output
 
-    def working_root(self):
+    def working_root(self) -> str:
         """Where is the root of the coverage.py working tree?"""
-        return os.path.dirname(nice_file(coverage.__file__, ".."))
+        return os.path.dirname(nice_file(__file__, ".."))
 
-    def report_from_command(self, cmd):
+    def report_from_command(self, cmd: str) -> str:
         """Return the report from the `cmd`, with some convenience added."""
         report = self.run_command(cmd).replace('\\', '/')
         assert "error" not in report.lower()
         return report
 
-    def report_lines(self, report):
+    def report_lines(self, report: str) -> List[str]:
         """Return the lines of the report, as a list."""
         lines = report.split('\n')
         assert lines[-1] == ""
         return lines[:-1]
 
-    def line_count(self, report):
+    def line_count(self, report: str) -> int:
         """How many lines are in `report`?"""
         return len(self.report_lines(report))
 
-    def squeezed_lines(self, report):
+    def squeezed_lines(self, report: str) -> List[str]:
         """Return a list of the lines in report, with the spaces squeezed."""
         lines = self.report_lines(report)
         return [re.sub(r"\s+", " ", l.strip()) for l in lines]
 
-    def last_line_squeezed(self, report):
+    def last_line_squeezed(self, report: str) -> str:
         """Return the last line of `report` with the spaces squeezed down."""
         return self.squeezed_lines(report)[-1]
 
-    def get_measured_filenames(self, coverage_data):
+    def get_measured_filenames(self, coverage_data: CoverageData) -> Dict[str, str]:
         """Get paths to measured files.
 
         Returns a dict of {filename: absolute path to file}
@@ -451,9 +497,10 @@ class CoverageTest(
         return {os.path.basename(filename): filename
                 for filename in coverage_data.measured_files()}
 
-    def get_missing_arc_description(self, cov, start, end):
+    def get_missing_arc_description(self, cov: Coverage, start: TLineNo, end: TLineNo) -> str:
         """Get the missing-arc description for a line arc in a coverage run."""
         # ugh, unexposed methods??
+        assert self.last_module_name is not None
         filename = self.last_module_name + ".py"
         fr = cov._get_file_reporter(filename)
         arcs_executed = cov._analyze(filename).arcs_executed()
@@ -463,8 +510,8 @@ class CoverageTest(
 class UsingModulesMixin:
     """A mixin for importing modules from tests/modules and tests/moremodules."""
 
-    def setUp(self):
-        super().setUp()
+    def setUp(self) -> None:
+        super().setUp()             # type: ignore[misc]
 
         # Parent class saves and restores sys.path, we can just modify it.
         sys.path.append(nice_file(TESTS_DIR, "modules"))
@@ -472,7 +519,7 @@ class UsingModulesMixin:
         sys.path.append(nice_file(TESTS_DIR, "zipmods.zip"))
 
 
-def command_line(args):
+def command_line(args: str) -> int:
     """Run `args` through the CoverageScript command line.
 
     Returns the return code from CoverageScript.command_line.

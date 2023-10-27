@@ -23,9 +23,6 @@ DISTRIBUTION_NAME = coverage
 
 HTMLFILES_DIR = ${DISTRIBUTION_NAME}/htmlfiles
 htmlfiles_dirname = $(notdir ${HTMLFILES_DIR})
-bundled_libraries += $(addprefix ${HTMLFILES_DIR}/, \
-	jquery.isonscreen.js \
-	)
 
 RESOURCES_DIR = usr/share/{package}
 package_install_resources_root = ${package_install_root}/${RESOURCES_DIR}
@@ -34,6 +31,7 @@ DOCUMENTATION_DIR = doc
 MANPAGE_SUFFIX = .1
 manpage_tempfile_suffix = ${MANPAGE_SUFFIX}.tmp
 default_manpage_name = python-coverage${MANPAGE_SUFFIX}
+python_command_path = ${package_install_root}/usr/bin/python-coverage
 python3_command_names = $(sort $(notdir $(wildcard \
 	${package_working_root}/*/usr/bin/python3*-coverage)))
 versioned_command_names = ${python3_command_names}
@@ -50,6 +48,7 @@ GENERATED_FILES += ${DOCUMENTATION_BUILD_DIR}
 
 INSTALL = install
 MV = mv
+CP = cp
 
 # Send HTTP traffic to the “discard” service during packaging actions.
 export http_proxy = http://127.0.1.1:9/
@@ -62,15 +61,13 @@ RST2MAN = rst2man
 SPHINX = python3 -m sphinx
 SPHINX_OPTS = -N
 
+FIX_SHEBANG = debian/fix_shebang
+
 
 %:
-	dh $@ --with python3,pypy,sphinxdoc --buildsystem=pybuild
+	dh $@ --with python3,sphinxdoc --buildsystem=pybuild
 
 
-.PHONY: remove-bundled-libraries
-remove-bundled-libraries:
-	$(RM) ${bundled_libraries}
-
 .PHONY: manpage-aliases
 manpage-aliases: ${versioned_manpage_paths}
 
@@ -89,7 +86,6 @@ ${DOCUMENTATION_DIR}/%${MANPAGE_SUFFIX}: ${DOCUMENTATION_DIR}/${default_manpage_
 	cat debian/manpage_encoding_declaration.UTF-8 "$@".tmp > "$@"
 
 
-override_dh_auto_build: remove-bundled-libraries
 override_dh_auto_build:
 	dh_auto_build --buildsystem=pybuild
 	$(SPHINX) ${SPHINX_OPTS} -bhtml ${DOCUMENTATION_DIR}/ \
@@ -97,11 +93,6 @@ override_dh_auto_build:
 
 # Upstream test suite doesn't currently run in our build environment.
 override_dh_auto_test:
-
-override_dh_auto_install:
-	dh_auto_install --buildsystem=pybuild
-	$(RM) $(addprefix ${package_working_root}/${PYTHON3_PACKAGE_NAME}/, \
-	    usr/bin/python-coverage)
 
 export PYBUILD_AFTER_INSTALL = \
 	$(INSTALL) --mode=u=rwx,go=rx --directory \
@@ -113,7 +104,15 @@ export PYBUILD_AFTER_INSTALL = \
 	dh_link \
 	    --package={package} \
 	    "/${RESOURCES_DIR}/${htmlfiles_dirname}" \
-	    {install_dir}/${HTMLFILES_DIR}
+	    {install_dir}/${HTMLFILES_DIR} ; \
+	$(CP) ${python_command_path} \
+	    ${package_install_root}/usr/bin/python{version}-coverage ; \
+	$(FIX_SHEBANG) --interpreter 'usr/bin/python{version}' \
+	    ${package_install_root}/usr/bin/python{version}-coverage ; \
+	$(MV) ${python_command_path} \
+	    ${package_install_root}/usr/bin/python{version.major}-coverage ; \
+	$(FIX_SHEBANG) --interpreter 'usr/bin/python{version.major}' \
+	    ${package_install_root}/usr/bin/python{version.major}-coverage
 
 override_dh_installchangelogs:
 	dh_installchangelogs CHANGES.rst
@@ -126,8 +125,7 @@ override_dh_auto_clean:
 	$(RM) -r ${GENERATED_FILES}
 
 
-# Copyright © 2010–2022 Ben Finney <bignose@debian.org>
-#
+# Copyright © 2010–2023 Ben Finney <bignose@debian.org>
 # This is free software: you may copy, modify, and/or distribute this work
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; version 3 of that license or any later version.
@@ -135,7 +133,7 @@ override_dh_auto_clean:
 
 
 # Local variables:
-# mode: makefile
 # coding: utf-8
+# mode: makefile
 # End:
-# vim: filetype=make fileencoding=utf-8 :
+# vim: fileencoding=utf-8 filetype=make :

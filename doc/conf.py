@@ -36,13 +36,13 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinx.ext.ifconfig',
-    'sphinxcontrib.spelling',
     'sphinx.ext.intersphinx',
     'sphinxcontrib.restbuilder',
-    'sphinx.ext.extlinks',
     'sphinx.ext.napoleon',
-    'sphinx_tabs.tabs',
+    #'sphinx_tabs.tabs',
 ]
+
+autodoc_typehints = "description"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -58,18 +58,20 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Coverage.py'
-copyright = '2009\N{EN DASH}2021, Ned Batchelder'       # CHANGEME  # pylint: disable=redefined-builtin
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-#
-# The short X.Y version.
-version = "6.2"                                 # CHANGEME
+
+# @@@ editable
+copyright = "2009–2023, Ned Batchelder" # pylint: disable=redefined-builtin
+# The short X.Y.Z version.
+version = "7.2.7"
 # The full version, including alpha/beta/rc tags.
-release = "6.2"                                 # CHANGEME
+release = "7.2.7"
 # The date of release, in "monthname day, year" format.
-release_date = "November 26, 2021"              # CHANGEME
+release_date = "May 29, 2023"
+# @@@ end
 
 rst_epilog = """
 .. |release_date| replace:: {release_date}
@@ -120,7 +122,20 @@ pygments_style = 'sphinx'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
-    }
+}
+
+nitpick_ignore = [
+    ("py:class", "frame"),
+    ("py:class", "module"),
+    ("py:class", "DefaultValue"),
+    ("py:class", "FilePath"),
+    ("py:class", "TWarnFn"),
+    ("py:class", "TDebugCtl"),
+]
+
+nitpick_ignore_regex = [
+    (r"py:class", r"coverage\..*\..*"),
+]
 
 # -- Options for HTML output ---------------------------------------------------
 
@@ -204,6 +219,9 @@ htmlhelp_basename = 'coveragepydoc'
 # -- Spelling ---
 
 if any("spell" in arg for arg in sys.argv):
+    # sphinxcontrib.spelling needs the native "enchant" library, which often is
+    # missing, so only use the extension if we are specifically spell-checking.
+    extensions += ['sphinxcontrib.spelling']
     names_file = tempfile.NamedTemporaryFile(mode='w', prefix="coverage_names_", suffix=".txt")
     with open("../CONTRIBUTORS.txt") as contributors:
         names = set(re.split(r"[^\w']", contributors.read()))
@@ -215,11 +233,6 @@ if any("spell" in arg for arg in sys.argv):
     spelling_word_list_filename = ['dict.txt', names_file.name]
     spelling_show_suggestions = False
 
-
-extlinks = {
-    # :github:`123` becomes a link to the GitHub issue, with text "issue 123".
-    'github': ('https://github.com/nedbat/coveragepy/issues/%s', 'issue '),
-}
 
 # Regexes for URLs that linkcheck should skip.
 linkcheck_ignore = [
